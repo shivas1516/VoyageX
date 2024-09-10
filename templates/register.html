@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register</title>
+</head>
+<body>
+    <h1>Register Page</h1>
+    <form method="post">
+        <label>Email:</label>
+        <input type="email" name="email" required>
+        <br>
+        <label>Password:</label>
+        <input type="password" name="password" required>
+        <br>
+        <button type="submit">Register</button>
+    </form>
+    <a href="{{ url_for('login') }}">Login</a>
+    <a href="{{ url_for('landing') }}">Back to Landing Page</a>
+</body>
+</html>

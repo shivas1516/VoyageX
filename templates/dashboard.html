@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+</head>
+<body>
+    <h1>Welcome to the Dashboard</h1>
+    <p>You are logged in as {{ session['user'] }}</p>
+    <a href="{{ url_for('landing') }}">Back to Landing Page</a>
+</body>
+</html>
