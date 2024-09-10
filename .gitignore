@@ -1,4 +1,17 @@
+#VScode
 venv
 .env
 __pycache__
+
+#flask
+flask_session
+.db
+
+#Firebase credentials
 firebase.json
+
+#SSL production file
+app.log
+cert.pem
+csr.pem
+key.pem
