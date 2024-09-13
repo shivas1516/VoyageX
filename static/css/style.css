@@ -1,0 +1,329 @@
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    background-color: #e1f5f5; /* Pale Aqua */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.top-bar {
+    background-color: #62b5e2; /* Vibrant Blue */
+    color: #fff;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.profile {
+    width: 40px;
+    height: 40px;
+    background-color: #ddd;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+.dashboard-content {
+    
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 80%;
+    flex-grow: 1;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+.input-line {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    flex: 1;
+    margin-right: 10px;
+}
+
+.form-group:last-child {
+    margin-right: 0;
+}
+
+.form-group.full-width {
+    flex: 0 0 100%;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+textarea {
+    resize: none;
+    height: 2.4em;
+    overflow: hidden;
+}
+
+/* Style for input and textarea */
+input, select, textarea {
+    width: 100%;
+    padding: 8px;
+    background-color: #e1f5f5; /* Keep this color on focus */
+    color: #333; /* Text color */
+    border: 1px solid #9f9d9d; /* Vibrant Blue border */
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+/* Change border color on focus */
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #9f9d9d; /* Soft Aqua for focused input */
+    background-color: #e1f5f5; /* Keep background color consistent on focus */
+}
+
+/* Label styling to match theme */
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #1d1e1e; /* Vibrant Blue for label */
+}
+
+
+
+button {
+    display: block;
+    width: 65%;
+    padding: 10px;
+    background-color: #62b5e2; /* Vibrant Blue */
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-left: 6%;
+}
+
+button:hover {
+    background-color: #35a7e4; /* Soft Aqua */
+}
+
+.destination {
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+}
+
+.submit-container {
+    position: fixed;  
+    bottom: 0;        
+    width: 100%;      
+    background-color: transparent; /* Pale Aqua */
+    padding: 10px 0;  
+    text-align: center;
+    z-index: 100;
+}
+
+.card_bg{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#responseContainer {
+    width: 80%;
+    margin-top: 10px;
+    padding: 20px;
+    background-color: #cef0f5;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    display: none;
+}
+
+#downloadPdf {
+    width: 200px;
+    margin-top: 2px;
+    background-color: #62b5e2; /* Vibrant Blue */
+}
+
+#downloadPdf:hover {
+    background-color: #35a7e4; /* Soft Aqua */
+}
+
+
+/* Base styles */
+.profile {
+    width: 40px;
+    height: 40px;
+    background-color: #ddd;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.profile img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-popup {
+    position: absolute;
+    top: 60px;
+    right: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 20px;
+    display: none;
+    z-index: 1000;
+    text-align: center;
+    max-width: 300px; /* Ensure the popup doesn't get too wide */
+    width: 100%; /* Full width of parent */
+}
+
+.profile-popup .profile-picture {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin: 0 auto 10px;
+    overflow: hidden;
+}
+
+.profile-popup .profile-picture img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-popup .user-name {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.profile-popup .logout-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%; /* Full width for better responsiveness */
+    box-sizing: border-box; /* Ensures padding and border are included in the width */
+}
+.baa{
+    width: 800px;
+    margin-left: 375px;
+}
+
+
+.gap{
+    height: 2px;
+    background-color: fff;
+}
+/* Responsive styles */
+@media (max-width: 768px) {
+    .profile-popup .logout-btn {
+        padding: 6px 12px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-popup .logout-btn {
+        padding: 5px 10px;
+        font-size: 12px;
+    }
+}
+
+
+.profile-popup .logout-btn:hover {
+    background-color: #c82333;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .profile {
+        width: 35px;
+        height: 35px;
+    }
+
+    .profile-popup {
+        right: 10px; /* Adjust right position for smaller screens */
+        padding: 15px;
+    }
+
+    .profile-popup .profile-picture {
+        width: 70px;
+        height: 70px;
+    }
+
+    .profile-popup .user-name {
+        font-size: 16px;
+    }
+
+    .profile-popup .logout-btn {
+        padding: 6px 12px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile {
+        width: 30px;
+        height: 30px;
+    }
+
+    .profile-popup {
+        width: 90%; /* Make popup wider for small screens */
+        left: 5%; /* Center the popup horizontally */
+        right: 5%;
+        top: 50px;
+        padding: 10px;
+    }
+
+    .profile-popup .profile-picture {
+        width: 60px;
+        height: 60px;
+    }
+
+    .profile-popup .user-name {
+        font-size: 14px;
+    }
+
+    .profile-popup .logout-btn {
+        padding: 5px 10px;
+        font-size: 12px;
+    }
+}

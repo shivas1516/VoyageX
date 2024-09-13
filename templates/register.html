@@ -1,23 +1,63 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
+    <link rel="stylesheet" href="../static/css/login.css">
 </head>
 <body>
-    <h1>Register Page</h1>
-    <form method="post">
-        <label>Email:</label>
-        <input type="email" name="email" required>
-        <br>
-        <label>Password:</label>
-        <input type="password" name="password" required>
-        <br>
-        <button type="submit">Register</button>
-    </form>
-    <a href="{{ url_for('login') }}">Login</a>
-    <a href="{{ url_for('landing') }}">Back to Landing Page</a>
-    
-    <!-- Google OAuth Login Button -->
-    <a href="{{ url_for('google_login') }}">Login with Google</a>
+
+    <!-- Top Navigation Bar -->
+    <div class="navbar">
+        <a href="{{ url_for('landing') }}">Home</a>
+        <a href="{{ url_for('login') }}">Login</a>
+    </div>
+
+    <!-- Display flash messages -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var messages = {{ messages|tojson }};
+            messages.forEach(function(message) {
+                var category = message[0];
+                var text = message[1];
+                alert('[' + category + '] ' + text);
+            });
+        });
+    </script>
+
+    <!-- Register Card -->
+    <div class="login-card">
+        <h1>Register</h1>
+        <form method="post">
+            {{ form.hidden_tag() }}  <!-- CSRF token -->
+
+            <label for="name">Name:</label>
+            {{ form.name(id="name") }}  <!-- Name field -->
+            
+            <label for="email">Email:</label>
+            {{ form.email(id="email") }}  <!-- Email field -->
+            
+            <label for="password">Password:</label>
+            {{ form.password(id="password") }}  <!-- Password field -->
+            
+            <button type="submit">Register</button>
+        </form>
+
+        <!-- Separator -->
+        <div class="separator">--------- or ---------</div>
+
+        <!-- Google OAuth Login Button -->
+        <a href="{{ url_for('google_login') }}" class="google-login">
+            <img src="https://www.google.com/favicon.ico" alt="Google logo">
+            Login with Google
+        </a>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        &copy; 2024 Your Website. All rights reserved.
+    </footer>
+
 </body>
 </html>

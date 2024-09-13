@@ -1,11 +1,168 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-    <title>Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoyageX Dashboard</title>
+    <link rel="stylesheet" href="../static/css/style.css">
 </head>
+
 <body>
-    <h1>Welcome to the Dashboard</h1>
-    <p>You are logged in as {{ session['user'] }}</p>
-    <a href="{{ url_for('landing') }}">Back to Landing Page</a>
+    <div class="top-bar">
+        <div class="logo"><a href="index.html" style="text-decoration: none; color: aliceblue;">VoyageX</a></div>
+        <div class="profile" id="profileIcon">
+            <img src="../static/img/profile.jpg" alt="Profile" />
+        </div>
+    </div>
+    <div class="profile-popup" id="profilePopup">
+        <div class="profile-picture">
+            <img src="../static/img/profile.jpg" alt="Profile Picture" />
+        </div>
+        <div class="user-name">John Doe</div>
+        <button class="logout-btn" id="logoutBtn">Log Out</button>
+    </div>
+    <div class="gap"></div>
+    <div class="banner">
+        <img src="../static/img/banner.png" alt="" class="baa">
+    </div>
+
+
+    <div class="dashboard-content">
+
+        <form id="travelForm">
+            <div class="input-line">
+                <div class="form-group">
+                    <label for="fromLocation">From Location:</label>
+                    <input type="text" id="fromLocation" name="fromLocation" required>
+                </div>
+                <div class="form-group">
+                    <label for="startDate">Start Date:</label>
+                    <input type="date" id="startDate" name="startDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="endDate">End Date:</label>
+                    <input type="date" id="endDate" name="endDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="predefinedTheme">Predefined Theme:</label>
+                    <select id="predefinedTheme" name="predefinedTheme" required>
+                        <option value="">Select theme</option>
+                        <option value="family">Family</option>
+                        <option value="honeymoon">Honeymoon</option>
+                        <option value="office_trip">Office Trip</option>
+                        <option value="friends_trip">Friends Trip</option>
+                        <option value="adventure">Adventure</option>
+                        <option value="relaxation">Relaxation</option>
+                        <option value="cultural">Cultural</option>
+                        <option value="nature">Nature</option>
+                        <option value="beach">Beach</option>
+                        <option value="historical">Historical</option>
+                        <option value="wildlife">Wildlife</option>
+                        <option value="food_wine">Food & Wine</option>
+                        <option value="luxury">Luxury</option>
+                        <option value="romantic_getaway">Romantic Getaway</option>
+                        <option value="solo_travel">Solo Travel</option>
+                    </select>
+                </div>
+            </div>
+            <div class="input-line">
+                <div class="form-group">
+                    <label for="startTime">Starting Time:</label> <!-- New field for starting time -->
+                    <input type="time" id="startTime" name="startTime" required>
+                </div>
+                <div class="form-group">
+                    <label for="returnTime">Returning Time:</label> <!-- New field for returning time -->
+                    <input type="time" id="returnTime" name="returnTime" required>
+                </div>
+                <div class="form-group">
+                    <label for="groupSize">Group Size:</label>
+                    <input type="number" id="groupSize" name="groupSize" required>
+                </div>
+                <div class="form-group">
+                    <label for="totalBudget">Total Budget (INR):</label>
+                    <input type="number" id="totalBudget" name="totalBudget" required>
+                </div>
+            </div>
+            <div class="input-line">
+                <div class="form-group" style="flex: 0 0 24%;">
+                    <label for="numDestinations">Number of Destinations:</label>
+                    <input type="number" id="numDestinations" name="numDestinations" min="1" value="1" required>
+                </div>
+                <div class="form-group" style="flex: 0 0 24%;">
+                    <label for="travelingMethod">Traveling Method:</label>
+                    <select id="travelingMethod" name="travelingMethod" required>
+                        <option value="">Select traveling method</option>
+                        <option value="air">Air</option>
+                        <option value="train">Train</option>
+                        <option value="bus">Bus</option>
+                        <option value="car">Car</option>
+                        <option value="mix">Mix</option>
+                    </select>
+                </div>
+            </div>
+            <div id="destinationsContainer"></div>
+            <div class="submit-container">
+                <button type="submit">Submit</button>
+            </div>
+        </form>
+
+
+
+    </div>
+    <div class="card_bg">
+        <div id="responseContainer">
+            <h2>Travel Plan</h2>
+            <div id="responseContent"></div>
+            <button id="downloadPdf">Download as PDF</button>
+        </div>
+    </div>
+
+    <div style="height: 100px;">
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="../static/js/script.js"></script>
+
+    <script>
+        document.getElementById('travelForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            // Collect form data
+            const formData = {
+                fromLocation: document.getElementById('fromLocation').value,
+                startDate: document.getElementById('startDate').value,
+                endDate: document.getElementById('endDate').value,
+                totalBudget: document.getElementById('totalBudget').value,
+                groupSize: document.getElementById('groupSize').value,
+                foodPreference: document.getElementById('foodPreference').value,
+                predefinedTheme: document.getElementById('predefinedTheme').value,
+                travelingMethod: document.getElementById('travelingMethod').value,
+                numDestinations: document.getElementById('numDestinations').value
+            };
+
+            // Send the data to the backend
+            fetch('/generate_plan', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update the response area with the Gemini API response
+                        document.getElementById('responseContent').innerText = JSON.stringify(data.response, null, 2);
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        });
+    </script>
 </body>
+
 </html>

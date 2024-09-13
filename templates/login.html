@@ -1,23 +1,82 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
+    <link rel="stylesheet" href="../static/css/login.css">
+    <script>
+        // JavaScript function to display flash messages as alerts
+        function showFlashMessage(message) {
+            alert(message);  // Use the browser's alert function
+        }
+
+        // Function to display flash messages from the backend
+        window.onload = function() {
+            // Flash messages will be populated here by Jinja2
+            const messages = {{ messages | tojson | safe }};
+            
+            if (messages.length > 0) {
+                messages.forEach(function(item) {
+                    const category = item[0];  // Get category (e.g., 'success', 'danger')
+                    const message = item[1];   // Get the message content
+                    showFlashMessage(message); // Show message as a browser alert
+                });
+            }
+        }
+    </script>
 </head>
 <body>
-    <h1>Login Page</h1>
-    <form method="post">
-        <label>Email:</label>
-        <input type="email" name="email" required>
-        <br>
-        <label>Password:</label>
-        <input type="password" name="password" required>
-        <br>
-        <button type="submit">Login</button>
-    </form>
-    <a href="{{ url_for('register') }}">Register</a>
-    <a href="{{ url_for('landing') }}">Back to Landing Page</a>
-    
-    <!-- Google OAuth Login Button -->
-    <a href="{{ url_for('google_login') }}">Login with Google</a>
+
+    <!-- Top Navigation Bar -->
+    <div class="navbar">
+        <a href="{{ url_for('landing') }}">Home</a>
+        <a href="{{ url_for('register') }}">Register</a>
+    </div>
+
+    <!-- Login Card -->
+    <div class="login-card">
+        <h1>Login</h1>
+        <form method="post">
+            {{ form.hidden_tag() }}  <!-- CSRF token -->
+            
+            <label for="email">Email:</label>
+            {{ form.email(id="email") }}  <!-- Email field -->
+        
+            <label for="password">Password:</label>
+            {{ form.password(id="password") }}  <!-- Password field -->
+        
+            <button type="submit">Login</button>
+        </form>
+        
+
+        <!-- Separator -->
+        <div class="separator">--------- or ---------</div>
+
+        <!-- Google OAuth Login Button -->
+        <a href="{{ url_for('google.login') }}" class="google-login">
+            <img src="https://www.google.com/favicon.ico" alt="Google logo">
+            Login with Google
+        </a>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        &copy; 2024 Your Website. All rights reserved.
+    </footer>
+
+    <!-- Flash Messages as Pop-ups -->
+    <script type="text/javascript">
+        // Ensure that messages are defined and non-empty
+        const messages = {{ messages | tojson | safe }};
+        if (messages && messages.length > 0) {
+            messages.forEach(function(item) {
+                const category = item[0];  // Get category (e.g., 'success', 'danger')
+                const message = item[1];   // Get the message content
+                showFlashMessage(message); // Show message as a browser alert
+            });
+        }
+    </script>
+
 </body>
 </html>

@@ -1,0 +1,119 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #e1f5f5;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Navigation bar */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    background-color: #62b5e2;
+    padding: 10px;
+    color: white;
+}
+.navbar a {
+    color: white;
+    text-decoration: none;
+    padding: 8px;
+}
+.navbar a:hover {
+    background-color: #2ba4e6;
+    border-radius: 5px;
+}
+
+/* Login card */
+.login-card {
+    background-color: #ffffff;
+    max-width: 600px;
+    margin: 50px 50px 0 50px; /* Left-aligned */
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    position: relative;
+}
+
+
+h1 {
+    text-align: center;
+}
+label {
+    font-weight: bold;
+    display: block;
+    margin-top: 10px;
+}
+input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+button {
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff; /* Main button color */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: block;
+    margin-bottom: 10px;
+    font-size: 16px; /* Ensures text size consistency */
+}
+
+button:hover {
+    background-color: #0056b3; /* Darker shade for hover */
+}
+
+.separator {
+    text-align: center;
+    margin: 20px 0;
+    color: #999;
+}
+
+/* Google login button */
+.google-login {
+    width: 97%; /* Same width as standard button */
+    padding: 10px;
+    background-color: #4285F4; /* Google blue */
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none; /* Remove underline */
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px; /* Ensures text size consistency */
+    margin-bottom: 10px; /* Same margin as standard button */
+}
+
+.google-login:hover {
+    background-color: #357ae8; /* Darker blue for hover */
+}
+
+.google-login img {
+    width: 20px; /* Icon size */
+    height: 20px; /* Icon size */
+    margin-right: 10px; /* Space between icon and text */
+}
+
+
+/* Footer */
+footer {
+    background-color: #62b5e2;
+    color: white;
+    padding: 10px 0;
+    text-align: center;
+    position: relative;
+    bottom: 0;
+    width: 100%;
+    margin-top: auto;
+}
