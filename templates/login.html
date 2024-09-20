@@ -34,31 +34,42 @@
         <a href="{{ url_for('register') }}">Register</a>
     </div>
 
-    <!-- Login Card -->
-    <div class="login-card">
-        <h1>Login</h1>
-        <form method="post">
-            {{ form.hidden_tag() }}  <!-- CSRF token -->
+    {% extends "base.html" %}
+
+    {% block content %}
+    <div class="container">
+        <!-- Login Card -->
+        <div class="login-card">
+            <h1>Login</h1>
+            <form method="post">
+                {{ form.csrf_token }}
+                
+                <label for="email">Email:</label>
+                {{ form.email(id="email", class="form-control") }}
+                {% for error in form.email.errors %}
+                    <span class="error-message">{{ error }}</span>
+                {% endfor %}
             
-            <label for="email">Email:</label>
-            {{ form.email(id="email") }}  <!-- Email field -->
-        
-            <label for="password">Password:</label>
-            {{ form.password(id="password") }}  <!-- Password field -->
-        
-            <button type="submit">Login</button>
-        </form>
-        
-
-        <!-- Separator -->
-        <div class="separator">--------- or ---------</div>
-
-        <!-- Google OAuth Login Button -->
-        <a href="{{ url_for('google.login') }}" class="google-login">
-            <img src="https://www.google.com/favicon.ico" alt="Google logo">
-            Login with Google
-        </a>
+                <label for="password">Password:</label>
+                {{ form.password(id="password", class="form-control") }}
+                {% for error in form.password.errors %}
+                    <span class="error-message">{{ error }}</span>
+                {% endfor %}
+            
+                <button type="submit" class="btn btn-primary">Login</button>
+            </form>
+            
+            <!-- Separator -->
+            <div class="separator">--------- or ---------</div>
+    
+            <!-- Google OAuth Login Button -->
+            <a href="{{ url_for('google_login') }}" class="google-login">
+                <img src="https://www.google.com/favicon.ico" alt="Google logo">
+                Login with Google
+            </a>
+        </div>
     </div>
+    {% endblock %}
 
     <!-- Footer -->
     <footer>

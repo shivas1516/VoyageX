@@ -36,12 +36,18 @@ JWT_SECRET = os.getenv('JWT_SECRET_KEY')
 
 # Initialize OAuth
 oauth = OAuth(app)
-google_bp = make_google_blueprint(
+google = oauth.register(
+    name='google',
     client_id=os.getenv('GOOGLE_CLIENT_ID'),
     client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
-    redirect_to='google_login'
+    access_token_url='https://accounts.google.com/o/oauth2/token',
+    access_token_params=None,
+    authorize_url='https://accounts.google.com/o/oauth2/auth',
+    authorize_params=None,
+    api_base_url='https://www.googleapis.com/oauth2/v1/',
+    client_kwargs={'scope': 'openid email profile'},
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration'
 )
-app.register_blueprint(google_bp, url_prefix='/google_login')
 
 # Login Form class
 class LoginForm(FlaskForm):
@@ -104,8 +110,9 @@ def login():
             return redirect(url_for('login'))
 
         try:
-            user_record = auth.verify_password(email, password)  # Verify password (custom function)
-            token = generate_jwt_token(user_record.uid)
+            user = auth.get_user_by_email(email)
+            if not check_password_hash(user.password, password):
+                raise auth.InvalidPasswordError
 
             session['jwt_token'] = token
             session['user'] = email
@@ -147,7 +154,11 @@ def register():
 
         try:
             hashed_password = generate_password_hash(password)
-            user = auth.create_user(email=email, password=hashed_password, display_name=name)
+            user = auth.create_user(
+                email=email,
+                password=hashed_password,
+                display_name=name
+            )
             
             logging.info(f"User {email} registered successfully.")
             flash('Registration successful! You can now log in.', 'success')
@@ -169,29 +180,28 @@ def register():
     messages = get_flashed_messages(with_categories=True) or []
     return render_template('register.html', form=form, messages=messages)
 
-@app.route('/google_login/google/authorized')
+# Update the google_login route
+@app.route('/google_login')
 def google_login():
-    if not google.authorized:
-        return redirect(url_for('google.login'))
+    redirect_uri = url_for('google_auth', _external=True)
+    return google.authorize_redirect(redirect_uri)
 
-    # Get user information from Google
-    resp = google.get('/oauth2/v1/userinfo')
-    if resp.ok:
-        user_info = resp.json()
-        email = user_info['email']
-        
-        session['user'] = email
-        logging.info(f"User {email} logged in with Google OAuth.")
-        
-        # Generate JWT for authenticated users
-        user_record = auth.get_user_by_email(email) if user_exists(email) else auth.create_user(email=email)
-        token = generate_jwt_token(user_record.uid)
-        session['jwt_token'] = token
-        
-        return redirect(url_for('dashboard'))
-    else:
-        flash('Failed to log in with Google.', 'danger')
-        return redirect(url_for('landing'))
+@app.route('/google_login/google/authorized')
+def google_auth():
+    token = google.authorize_access_token()
+    resp = google.get('userinfo')
+    user_info = resp.json()
+    email = user_info['email']
+    
+    session['user'] = email
+    logging.info(f"User {email} logged in with Google OAuth.")
+    
+    # Generate JWT for authenticated users
+    user_record = auth.get_user_by_email(email) if user_exists(email) else auth.create_user(email=email)
+    token = generate_jwt_token(user_record.uid)
+    session['jwt_token'] = token
+    
+    return redirect(url_for('dashboard'))
 
 @app.route('/dashboard')
 def dashboard():
@@ -208,6 +218,14 @@ def dashboard():
 def generate_content():
     data = request.json
 
+    required_fields = ['fromLocation', 'startDate', 'endDate', 'startTime', 'returnTime', 
+                       'groupSize', 'totalBudget', 'predefinedTheme', 'numDestinations', 
+                       'travelingMethod']
+    
+    for field in required_fields:
+        if field not in data:
+            return jsonify({'success': False, 'message': f'Missing required field: {field}'}), 400
+
     user_input = prompt.format(
         fromLocation=data['fromLocation'],
         startDate=data['startDate'],
@@ -219,7 +237,7 @@ def generate_content():
         predefinedTheme=data['predefinedTheme'],
         numDestinations=data['numDestinations'],
         travelingMethod=data['travelingMethod'],
-        destinations=', '.join(data.get('destinations', [])) 
+        destinations=', '.join(data.get('destinations', []))
     )
     
     print("User input for model:", user_input)  # Log the input
@@ -229,12 +247,20 @@ def generate_content():
         model = genai.GenerativeModel("gemini-1.5-flash")
         response = model.generate_content(user_input)
 
-        # Return the generated text
-        return jsonify({'success': True, 'text': response.text})
+        if response.text:
+            return jsonify({'success': True, 'text': response.text})
+        else:
+            return jsonify({'success': False, 'message': 'Generated content is empty'}), 500
     
+    except genai.types.BlockedPromptException as e:
+        print(f"Blocked prompt error: {e}")
+        return jsonify({'success': False, 'message': 'The prompt was blocked due to content safety concerns'}), 400
+    except genai.types.GenerationException as e:
+        print(f"Generation error: {e}")
+        return jsonify({'success': False, 'message': 'Failed to generate content due to an API error'}), 500
     except Exception as e:
-        print(f"Error generating content: {e}")
-        return jsonify({'success': False, 'message': 'Failed to generate content'}), 500
+        print(f"Unexpected error generating content: {e}")
+        return jsonify({'success': False, 'message': 'An unexpected error occurred while generating content'}), 500
 
 @app.route('/logout')
 def logout():
