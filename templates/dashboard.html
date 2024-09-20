@@ -68,11 +68,11 @@
             </div>
             <div class="input-line">
                 <div class="form-group">
-                    <label for="startTime">Starting Time:</label> <!-- New field for starting time -->
+                    <label for="startTime">Starting Time:</label>
                     <input type="time" id="startTime" name="startTime" required>
                 </div>
                 <div class="form-group">
-                    <label for="returnTime">Returning Time:</label> <!-- New field for returning time -->
+                    <label for="returnTime">Returning Time:</label>
                     <input type="time" id="returnTime" name="returnTime" required>
                 </div>
                 <div class="form-group">
@@ -106,9 +106,9 @@
                 <button type="submit">Submit</button>
             </div>
         </form>
-
-
-
+    
+        <div id="loading-indicator" style="display: none;">Loading...</div> <!-- Added loading indicator -->
+    
     </div>
     <div class="card_bg">
         <div id="responseContainer">
@@ -117,52 +117,13 @@
             <button id="downloadPdf">Download as PDF</button>
         </div>
     </div>
+    
 
     <div style="height: 100px;">
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="../static/js/script.js"></script>
-
-    <script>
-        document.getElementById('travelForm').addEventListener('submit', function (e) {
-            e.preventDefault();
-
-            // Collect form data
-            const formData = {
-                fromLocation: document.getElementById('fromLocation').value,
-                startDate: document.getElementById('startDate').value,
-                endDate: document.getElementById('endDate').value,
-                totalBudget: document.getElementById('totalBudget').value,
-                groupSize: document.getElementById('groupSize').value,
-                foodPreference: document.getElementById('foodPreference').value,
-                predefinedTheme: document.getElementById('predefinedTheme').value,
-                travelingMethod: document.getElementById('travelingMethod').value,
-                numDestinations: document.getElementById('numDestinations').value
-            };
-
-            // Send the data to the backend
-            fetch('/generate_plan', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(formData)
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Update the response area with the Gemini API response
-                        document.getElementById('responseContent').innerText = JSON.stringify(data.response, null, 2);
-                    } else {
-                        alert('Error: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
-        });
-    </script>
 </body>
 
 </html>

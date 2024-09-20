@@ -33,8 +33,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="Number of Days${i}">Number Stay Days:</label>
-                        <input type="number" textarea id="Number od Days${i}" name="Number od Days${i}" rows="1"></textarea>
+                        <label for="NumberOfDays${i}">Number of Stay Days:</label>
+                        <input type="number" id="NumberOfDays${i}" name="NumberOfDays${i}" required>
                     </div>
                 </div>
             `;
@@ -49,21 +49,27 @@ document.addEventListener('DOMContentLoaded', function() {
             el.style.display = isMix ? 'block' : 'none';
         });
     }
-    
+
     numDestinationsInput.addEventListener('change', function() {
         createDestinationFields(this.value);
     });
-    
+
     travelingMethodSelect.addEventListener('change', updateTravelPreferences);
-    
+
     form.addEventListener('submit', function(e) {
         e.preventDefault();
+        console.log('Form submitted!'); // This is showing, so we know the form is being submitted.
+    
+        // Collect form data
         const formData = new FormData(form);
         const jsonData = {};
-        
+    
         formData.forEach((value, key) => {
             jsonData[key] = value;
         });
+    
+        // Log the form data to see what is being sent
+        console.log("Form Data:", jsonData);
     
         // Show loading indicator
         const loadingIndicator = document.getElementById('loading-indicator');
@@ -77,35 +83,63 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify(jsonData),
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Response received from server'); // Log when the response comes in
+            return response.json();
+        })
         .then(data => {
+            // Log the data received from the server
+            console.log("Data Received:", data);
+    
             // Hide loading indicator
             loadingIndicator.style.display = 'none';
-            
-            // Display the response in a table format
-            displayResponse(data);
+    
+            if (data.success) {
+                // Display the response in the user interface
+                displayResponse(data);
+            } else {
+                alert('Error: ' + data.message);
+            }
         })
         .catch(error => {
             // Hide loading indicator
             loadingIndicator.style.display = 'none';
             
-            // Display error message
+            // Log the error
             console.error('Error:', error);
+    
             displayResponse({ error: 'An error occurred while generating the itinerary. Please try again.' });
         });
     });
     
-    function displayResponse(responseData) {
-        const responseContainer = document.getElementById('response-container');
-        if (responseData.itinerary) {
-            // Generate a table to display the itinerary
-            const tableHtml = generateTableFromItinerary(responseData.itinerary);
-            responseContainer.innerHTML = `<h2>Your Travel Itinerary:</h2>${tableHtml}`;
-        } else if (responseData.error) {
-            responseContainer.innerHTML = `<h2>Error:</h2><p>${responseData.error}</p>`;
+    function displayResponse(response) {
+        const responseContent = document.getElementById('responseContent');
+    
+        // Log the response before displaying it
+        console.log("Displaying Response:", response);
+    
+        // Clear any previous content
+        responseContent.innerHTML = '';
+    
+        if (response.error) {
+            // Display error message
+            responseContent.innerHTML = `<p class="error">${response.error}</p>`;
+        } else if (response.text) {
+            // Assuming the server responds with a `text` field containing the response
+            const paragraph = document.createElement('p');
+            paragraph.textContent = response.text;
+            responseContent.appendChild(paragraph);
+        } else if (response.itinerary) {
+            // If the server responds with an itinerary object, display it as a table
+            responseContent.innerHTML = generateTableFromItinerary(response.itinerary);
+        } else {
+            responseContent.innerHTML = '<p class="error">No valid response received.</p>';
         }
-        responseContainer.style.display = 'block';
+    
+        // Log the updated content of the response container
+        console.log("Response Container Content Updated:", responseContent.innerHTML);
     }
+     
     
     // Helper function to generate HTML table from the itinerary data
     function generateTableFromItinerary(itinerary) {
@@ -137,16 +171,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
         tableHtml += `</tbody></table>`;
         return tableHtml;
-    }
-    
+    }    
 
     downloadPdfButton.addEventListener('click', function() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        
+
         doc.text("Travel Plan", 10, 10);
         doc.text(responseContent.innerText, 10, 20);
-        
+
         doc.save("travel-plan.pdf");
     });
 
@@ -173,5 +206,4 @@ document.addEventListener('DOMContentLoaded', function() {
         alert('Logout functionality would be implemented here.');
         profilePopup.style.display = 'none';
     });
-
 });

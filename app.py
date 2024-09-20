@@ -169,17 +169,6 @@ def register():
     messages = get_flashed_messages(with_categories=True) or []
     return render_template('register.html', form=form, messages=messages)
 
-@app.route('/dashboard')
-def dashboard():
-    if 'user' not in session or 'jwt_token' not in session:
-        flash('You must be logged in to access this page.', 'warning')
-        return redirect(url_for('login'))
-
-    if not validate_jwt_token(session['jwt_token']):
-        return redirect(url_for('login'))
-
-    return render_template('dashboard.html')
-
 @app.route('/google_login/google/authorized')
 def google_login():
     if not google.authorized:
@@ -193,6 +182,50 @@ def google_login():
 
     logging.info(f"User {email} logged in with Google OAuth.")
     return render_template('dashboard.html')
+
+@app.route('/dashboard')
+def dashboard():
+    if 'user' not in session or 'jwt_token' not in session:
+        flash('You must be logged in to access this page.', 'warning')
+        return redirect(url_for('login'))
+
+    if not validate_jwt_token(session['jwt_token']):
+        return redirect(url_for('login'))
+
+    return render_template('dashboard.html')
+
+@app.route('/generate_plan', methods=['POST'])
+def generate_content():
+    data = request.json
+
+    # Prepare user input using the prompt template from prompt_text.py
+    user_input = prompt.format(
+        fromLocation=data['fromLocation'],
+        startDate=data['startDate'],
+        endDate=data['endDate'],
+        startTime=data['startTime'],
+        returnTime=data['returnTime'],
+        groupSize=data['groupSize'],
+        totalBudget=data['totalBudget'],
+        predefinedTheme=data['predefinedTheme'],
+        numDestinations=data['numDestinations'],
+        travelingMethod=data['travelingMethod'],
+        destinations=', '.join(data.get('destinations', []))  # Assuming destinations are sent as a list
+    )
+    
+    print("User input for model:", user_input)  # Log the input
+
+    try:
+        # Use the Gemini API to generate content
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        response = model.generate_content(user_input)
+
+        # Return the generated text
+        return jsonify({'success': True, 'text': response.text})
+    
+    except Exception as e:
+        print(f"Error generating content: {e}")
+        return jsonify({'success': False, 'message': 'Failed to generate content'}), 500
 
 @app.route('/logout')
 def logout():
