@@ -19,7 +19,6 @@ import google.generativeai as genai
 import json
 from prompt_text import prompt
 
-
 # Load environment variables from .env file
 load_dotenv()
 
@@ -31,9 +30,6 @@ firebase_admin.initialize_app(cred)
 app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET_KEY')  # Load secret key from environment
 csrf = CSRFProtect(app)
-
-# Initialize logging
-#logging.basicConfig(filename='app.log', level=logging.DEBUG)  # Use DEBUG level for development
 
 # Secret key for JWT encoding/decoding
 JWT_SECRET = os.getenv('JWT_SECRET_KEY')
@@ -47,15 +43,10 @@ google_bp = make_google_blueprint(
 )
 app.register_blueprint(google_bp, url_prefix='/google_login')
 
-@app.route('/')
-def landing():
-    return render_template('landing.html')
-
 # Login Form class
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
-
 
 # Register Form class
 class RegisterForm(FlaskForm):
@@ -63,98 +54,128 @@ class RegisterForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
 
+# Utility functions
+def generate_jwt_token(user_id):
+    """Generate a JWT token for a given user_id."""
+    return jwt.encode({
+        'sub': user_id,
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    }, JWT_SECRET, algorithm='HS256')
+
+def validate_jwt_token(token):
+    """Validate the JWT token and handle token-related errors."""
+    try:
+        jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
+    except jwt.ExpiredSignatureError:
+        flash('Token expired. Please log in again.', 'warning')
+        return False
+    except jwt.InvalidTokenError:
+        flash('Invalid token. Please log in again.', 'danger')
+        return False
+    return True
+
+def user_exists(email):
+    """Check if a user exists in Firebase by their email."""
+    try:
+        auth.get_user_by_email(email)
+        return True
+    except auth.UserNotFoundError:
+        return False
+
+def log_and_flash_error(message, category='danger'):
+    """Helper function to log errors and flash messages."""
+    logging.error(message)
+    flash(message, category)
+
+@app.route('/')
+def landing():
+    return render_template('landing.html')
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    form = LoginForm()  # Create an instance of LoginForm
-    
-    if form.validate_on_submit():  # Handle form submission
-        email = form.email.data  # Get the email from the form
-        password = form.password.data  # Get the password from the form
+    form = LoginForm()
+
+    if form.validate_on_submit():
+        email = form.email.data
+        password = form.password.data
+
+        if not user_exists(email):
+            log_and_flash_error(f"Login failed: User with email {email} not found.")
+            return redirect(url_for('login'))
 
         try:
-            user = auth.get_user_by_email(email)
+            user_record = auth.verify_password(email, password)  # Verify password (custom function)
+            token = generate_jwt_token(user_record.uid)
 
-            try:
-                # Firebase Authentication password verification
-                user_record = auth.verify_password(email, password)
-                token = jwt.encode({
-                    'sub': user.uid,
-                    'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
-                }, JWT_SECRET, algorithm='HS256')
+            session['jwt_token'] = token
+            session['user'] = email
 
-                session['jwt_token'] = token
-                session['user'] = email
-                logging.info(f"User {email} logged in successfully.")
-                flash('Logged in successfully!', 'success')
-                return redirect(url_for('dashboard'))
+            logging.info(f"User {email} logged in successfully.")
+            flash('Logged in successfully!', 'success')
+            return redirect(url_for('dashboard'))
 
-            except auth.AuthError:
-                logging.error(f"Incorrect password for {email}")
-                flash('Invalid password. Please try again.', 'danger')
-                return redirect(url_for('login'))
-
-        except auth.UserNotFoundError:
-            logging.error(f"Login failed: User with email {email} not found.")
-            flash('Email not found. Please check your email or sign up.', 'danger')
+        except auth.InvalidPasswordError:
+            log_and_flash_error(f"Invalid password for {email}")
             return redirect(url_for('login'))
-
+        except auth.AuthError as auth_error:
+            log_and_flash_error(f"Authentication error for {email}: {str(auth_error)}")
+            return redirect(url_for('login'))
         except Exception as e:
-            logging.error(f"Login failed for {email}: {str(e)}")
-            flash('An error occurred during login. Please try again later.', 'danger')
+            log_and_flash_error(f"Unexpected error during login for {email}: {str(e)}")
             return redirect(url_for('login'))
 
-    # Get flash messages and ensure they are defined
     messages = get_flashed_messages(with_categories=True) or []
-
-    # Render the login template with the form and flash messages
     return render_template('login.html', form=form, messages=messages)
-
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    form = RegisterForm()  # Create an instance of RegisterForm
+    form = RegisterForm()
 
-    if form.validate_on_submit(): 
-        name = form.name.data  
-        email = form.email.data  
-        password = form.password.data 
-        hashed_password = generate_password_hash(password)
+    if form.validate_on_submit():
+        name = form.name.data
+        email = form.email.data
+        password = form.password.data
 
-        try:
-            # Create user with name and email
-            user = auth.create_user(
-                email=email,
-                password=hashed_password,
-                display_name=name
-            )
-            logging.info(f"User {email} registered successfully.")
-            flash('Registration successful!', 'success')
-            return  render_template('dashboard.html')
-        except Exception as e:
-            logging.error(f"Registration failed for {email}: {str(e)}")
-            flash('Error creating user.', 'danger')
+        if user_exists(email):
+            flash('Email is already registered. Please log in.', 'warning')
+            logging.warning(f"Attempted registration with existing email: {email}")
+            return redirect(url_for('login'))
+
+        if len(password) < 8:
+            flash('Password must be at least 8 characters long.', 'danger')
             return redirect(url_for('register'))
 
-    # Retrieve flash messages
+        try:
+            hashed_password = generate_password_hash(password)
+            user = auth.create_user(email=email, password=hashed_password, display_name=name)
+            
+            logging.info(f"User {email} registered successfully.")
+            flash('Registration successful! You can now log in.', 'success')
+            return redirect(url_for('login'))
+
+        except auth.InvalidEmailError:
+            log_and_flash_error(f"Invalid email address during registration: {email}")
+            return redirect(url_for('register'))
+        except auth.WeakPasswordError:
+            log_and_flash_error(f"Weak password attempt for {email}")
+            return redirect(url_for('register'))
+        except auth.AuthError as auth_error:
+            log_and_flash_error(f"Authentication error during registration for {email}: {str(auth_error)}")
+            return redirect(url_for('register'))
+        except Exception as e:
+            log_and_flash_error(f"Unexpected error during registration for {email}: {str(e)}")
+            return redirect(url_for('register'))
+
     messages = get_flashed_messages(with_categories=True) or []
-
-    # Render the register template with the form and flash messages
     return render_template('register.html', form=form, messages=messages)
-
 
 @app.route('/dashboard')
 def dashboard():
     if 'user' not in session or 'jwt_token' not in session:
         flash('You must be logged in to access this page.', 'warning')
         return redirect(url_for('login'))
-    
-    try:
-        jwt.decode(session['jwt_token'], JWT_SECRET, algorithms=['HS256'])
-    except jwt.ExpiredSignatureError:
-        flash('Token expired. Please log in again.', 'warning')
-        return redirect(url_for('login'))
-    except jwt.InvalidTokenError:
-        flash('Invalid token. Please log in again.', 'danger')
+
+    if not validate_jwt_token(session['jwt_token']):
         return redirect(url_for('login'))
 
     return render_template('dashboard.html')
@@ -163,17 +184,15 @@ def dashboard():
 def google_login():
     if not google.authorized:
         return redirect(url_for('google.login'))
-    
+
     resp = google.get('/plus/v1/people/me')
     assert resp.ok, resp.text
 
-    # Extract the user's email from the Google response
     email = resp.json()['emails'][0]['value']
     session['user'] = email
-    logging.info(f"User {email} logged in with Google OAuth.")
-    
-    return render_template('dashboard.html')
 
+    logging.info(f"User {email} logged in with Google OAuth.")
+    return render_template('dashboard.html')
 
 @app.route('/logout')
 def logout():
@@ -182,12 +201,10 @@ def logout():
     flash('You have been logged out.', 'info')
     return redirect(url_for('landing'))
 
-
 @app.errorhandler(CSRFError)
 def handle_csrf_error(e):
     flash('CSRF token missing or incorrect.', 'danger')
     return redirect(url_for('login'))
-
 
 if __name__ == '__main__':
     app.run(debug=True)
