@@ -47,15 +47,6 @@ google_bp = make_google_blueprint(
 )
 app.register_blueprint(google_bp, url_prefix='/google_login')
 
-
-# Define the Gemini API URL and key (assuming it's in your environment variables)
-GEMINI_API_URL = os.getenv('GEMINI_API_URL')
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
-
-# Configure the Google AI API
-genai.configure(api_key='GEMINI_API_KEY')
-
-
 @app.route('/')
 def landing():
     return render_template('landing.html')
@@ -168,31 +159,6 @@ def dashboard():
 
     return render_template('dashboard.html')
 
-
-@app.route('/generate_plan', methods=['POST'])
-def generate_plan():
-    try:
-        # Get JSON data from the request
-        data = request.json
-        formatted_prompt = prompt.format(user_data=json.dumps(data, indent=2))
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        response = model.generate_content(formatted_prompt)
-        generated_itinerary = response.text
-        response_data = {
-            "itinerary": generated_itinerary
-        }
-
-        # Return the response as JSON
-        return jsonify(response_data), 200
-
-    except Exception as e:
-        # Handle any errors
-        error_response = {
-            "error": str(e)
-        }
-        return jsonify(error_response), 500
-
-
 @app.route('/google_login/google/authorized')
 def google_login():
     if not google.authorized:
@@ -200,10 +166,13 @@ def google_login():
     
     resp = google.get('/plus/v1/people/me')
     assert resp.ok, resp.text
+
+    # Extract the user's email from the Google response
     email = resp.json()['emails'][0]['value']
     session['user'] = email
     logging.info(f"User {email} logged in with Google OAuth.")
-    return redirect(url_for('dashboard'))
+    
+    return render_template('dashboard.html')
 
 
 @app.route('/logout')
