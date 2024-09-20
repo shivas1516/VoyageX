@@ -12,6 +12,7 @@ firebase_admin
 python-dotenv
 click==8.1.7
 cryptography==43.0.1
+gunicorn
 Flask==3.0.3
 Flask-Bcrypt==1.0.1
 Flask-Login==0.6.3
