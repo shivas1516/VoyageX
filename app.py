@@ -18,6 +18,7 @@ from wtforms.validators import DataRequired, Email
 import google.generativeai as genai
 import json
 from prompt_text import prompt
+import secrets
 
 # Load environment variables from .env file
 load_dotenv()
@@ -28,7 +29,7 @@ firebase_admin.initialize_app(cred)
 
 # Initialize Flask app and CSRF protection
 app = Flask(__name__)
-app.secret_key = os.getenv('FLASK_SECRET_KEY')  # Load secret key from environment
+app.secret_key = os.getenv('FLASK_SECRET_KEY')
 csrf = CSRFProtect(app)
 
 # Secret key for JWT encoding/decoding
