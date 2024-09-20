@@ -79,7 +79,7 @@ def user_exists(email):
     try:
         auth.get_user_by_email(email)
         return True
-    except auth.UserNotFoundError:
+    except firebase_admin.auth.UserNotFoundError:
         return False
 
 def log_and_flash_error(message, category='danger'):
@@ -174,14 +174,24 @@ def google_login():
     if not google.authorized:
         return redirect(url_for('google.login'))
 
-    resp = google.get('/plus/v1/people/me')
-    assert resp.ok, resp.text
-
-    email = resp.json()['emails'][0]['value']
-    session['user'] = email
-
-    logging.info(f"User {email} logged in with Google OAuth.")
-    return render_template('dashboard.html')
+    # Get user information from Google
+    resp = google.get('/oauth2/v1/userinfo')
+    if resp.ok:
+        user_info = resp.json()
+        email = user_info['email']
+        
+        session['user'] = email
+        logging.info(f"User {email} logged in with Google OAuth.")
+        
+        # Generate JWT for authenticated users
+        user_record = auth.get_user_by_email(email) if user_exists(email) else auth.create_user(email=email)
+        token = generate_jwt_token(user_record.uid)
+        session['jwt_token'] = token
+        
+        return redirect(url_for('dashboard'))
+    else:
+        flash('Failed to log in with Google.', 'danger')
+        return redirect(url_for('landing'))
 
 @app.route('/dashboard')
 def dashboard():
@@ -198,7 +208,6 @@ def dashboard():
 def generate_content():
     data = request.json
 
-    # Prepare user input using the prompt template from prompt_text.py
     user_input = prompt.format(
         fromLocation=data['fromLocation'],
         startDate=data['startDate'],
@@ -210,7 +219,7 @@ def generate_content():
         predefinedTheme=data['predefinedTheme'],
         numDestinations=data['numDestinations'],
         travelingMethod=data['travelingMethod'],
-        destinations=', '.join(data.get('destinations', []))  # Assuming destinations are sent as a list
+        destinations=', '.join(data.get('destinations', [])) 
     )
     
     print("User input for model:", user_input)  # Log the input
@@ -234,10 +243,8 @@ def logout():
     flash('You have been logged out.', 'info')
     return redirect(url_for('landing'))
 
+# Error handler for CSRF errors
 @app.errorhandler(CSRFError)
 def handle_csrf_error(e):
     flash('CSRF token missing or incorrect.', 'danger')
     return redirect(url_for('login'))
-
-if __name__ == '__main__':
-    app.run(debug=True)
