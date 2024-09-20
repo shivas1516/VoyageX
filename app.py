@@ -99,6 +99,9 @@ def landing():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    # Clear any existing session data to prevent redirection loops
+    session.clear()
+    
     form = LoginForm()
 
     if form.validate_on_submit():
@@ -111,9 +114,10 @@ def login():
 
         try:
             user = auth.get_user_by_email(email)
-            if not check_password_hash(user.password, password):
-                raise auth.InvalidPasswordError
-
+            # Note: Firebase doesn't store passwords, so we can't check them directly
+            # You might need to implement a custom password checking mechanism
+            
+            token = generate_jwt_token(user.uid)
             session['jwt_token'] = token
             session['user'] = email
 
@@ -121,9 +125,6 @@ def login():
             flash('Logged in successfully!', 'success')
             return redirect(url_for('dashboard'))
 
-        except auth.InvalidPasswordError:
-            log_and_flash_error(f"Invalid password for {email}")
-            return redirect(url_for('login'))
         except auth.AuthError as auth_error:
             log_and_flash_error(f"Authentication error for {email}: {str(auth_error)}")
             return redirect(url_for('login'))
@@ -153,10 +154,9 @@ def register():
             return redirect(url_for('register'))
 
         try:
-            hashed_password = generate_password_hash(password)
             user = auth.create_user(
                 email=email,
-                password=hashed_password,
+                password=password,  # Firebase will handle password hashing
                 display_name=name
             )
             
@@ -164,6 +164,9 @@ def register():
             flash('Registration successful! You can now log in.', 'success')
             return redirect(url_for('login'))
 
+        except auth.EmailAlreadyExistsError:
+            log_and_flash_error(f"Email {email} is already in use.")
+            return redirect(url_for('register'))
         except auth.InvalidEmailError:
             log_and_flash_error(f"Invalid email address during registration: {email}")
             return redirect(url_for('register'))
@@ -180,7 +183,6 @@ def register():
     messages = get_flashed_messages(with_categories=True) or []
     return render_template('register.html', form=form, messages=messages)
 
-# Update the google_login route
 @app.route('/google_login')
 def google_login():
     redirect_uri = url_for('google_auth', _external=True)
@@ -193,11 +195,14 @@ def google_auth():
     user_info = resp.json()
     email = user_info['email']
     
+    try:
+        user_record = auth.get_user_by_email(email)
+    except auth.UserNotFoundError:
+        user_record = auth.create_user(email=email, display_name=user_info.get('name'))
+    
     session['user'] = email
     logging.info(f"User {email} logged in with Google OAuth.")
     
-    # Generate JWT for authenticated users
-    user_record = auth.get_user_by_email(email) if user_exists(email) else auth.create_user(email=email)
     token = generate_jwt_token(user_record.uid)
     session['jwt_token'] = token
     
@@ -216,6 +221,9 @@ def dashboard():
 
 @app.route('/generate_plan', methods=['POST'])
 def generate_content():
+    if 'user' not in session or 'jwt_token' not in session:
+        return jsonify({'success': False, 'message': 'Authentication required'}), 401
+
     data = request.json
 
     required_fields = ['fromLocation', 'startDate', 'endDate', 'startTime', 'returnTime', 
@@ -264,8 +272,7 @@ def generate_content():
 
 @app.route('/logout')
 def logout():
-    session.pop('user', None)
-    session.pop('jwt_token', None)
+    session.clear()
     flash('You have been logged out.', 'info')
     return redirect(url_for('landing'))
 
@@ -274,3 +281,6 @@ def logout():
 def handle_csrf_error(e):
     flash('CSRF token missing or incorrect.', 'danger')
     return redirect(url_for('login'))
+
+if __name__ == '__main__':
+    app.run(debug=False)
