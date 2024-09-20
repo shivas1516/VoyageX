@@ -185,28 +185,45 @@ def register():
 
 @app.route('/google_login')
 def google_login():
+    # Generate a random state string
+    state = secrets.token_urlsafe(16)
+    # Store the state in the session
+    session['oauth_state'] = state
     redirect_uri = url_for('google_auth', _external=True)
-    return google.authorize_redirect(redirect_uri)
+    return google.authorize_redirect(redirect_uri, state=state)
 
 @app.route('/google_login/google/authorized')
 def google_auth():
-    token = google.authorize_access_token()
-    resp = google.get('userinfo')
-    user_info = resp.json()
-    email = user_info['email']
+    # Verify the state
+    if 'oauth_state' not in session or request.args.get('state') != session['oauth_state']:
+        flash('Invalid OAuth state', 'danger')
+        return redirect(url_for('login'))
     
     try:
-        user_record = auth.get_user_by_email(email)
-    except auth.UserNotFoundError:
-        user_record = auth.create_user(email=email, display_name=user_info.get('name'))
-    
-    session['user'] = email
-    logging.info(f"User {email} logged in with Google OAuth.")
-    
-    token = generate_jwt_token(user_record.uid)
-    session['jwt_token'] = token
-    
-    return redirect(url_for('dashboard'))
+        token = google.authorize_access_token()
+        resp = google.get('userinfo')
+        user_info = resp.json()
+        email = user_info['email']
+        
+        try:
+            user_record = auth.get_user_by_email(email)
+        except auth.UserNotFoundError:
+            user_record = auth.create_user(email=email, display_name=user_info.get('name'))
+        
+        session['user'] = email
+        logging.info(f"User {email} logged in with Google OAuth.")
+        
+        token = generate_jwt_token(user_record.uid)
+        session['jwt_token'] = token
+        
+        # Clear the oauth_state from the session
+        session.pop('oauth_state', None)
+        
+        return redirect(url_for('dashboard'))
+    except Exception as e:
+        logging.error(f"Error in Google OAuth: {str(e)}")
+        flash('An error occurred during Google login. Please try again.', 'danger')
+        return redirect(url_for('login'))
 
 @app.route('/dashboard')
 def dashboard():
