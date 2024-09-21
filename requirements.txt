@@ -8,3 +8,4 @@ authlib
 google-generativeai
 requests
 gunicorn
+email_validator

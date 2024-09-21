@@ -8,7 +8,7 @@ import jwt
 from datetime import datetime, timedelta
 from flask_wtf import CSRFProtect, FlaskForm
 from wtforms import StringField, PasswordField
-from wtforms.validators import DataRequired, Email, Length
+from wtforms.validators import DataRequired, Email, Length, EqualTo
 from dotenv import load_dotenv
 import os
 from authlib.integrations.flask_client import OAuth
@@ -79,15 +79,19 @@ class User(UserMixin):
         self.email = email
         self.display_name = display_name
 
-# Form classes
-class LoginForm(FlaskForm):
-    email = StringField('Email', validators=[DataRequired(), Email()])
-    password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
-
 class RegisterForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired(), Length(min=2, max=50)])
     email = StringField('Email', validators=[DataRequired(), Email()])
-    password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
+    password = PasswordField('Password', validators=[
+        DataRequired(), 
+        Length(min=8, message='Password must be at least 8 characters long'),
+        EqualTo('confirm_password', message='Passwords must match')
+    ])
+    confirm_password = PasswordField('Confirm Password', validators=[DataRequired()])
+
+class LoginForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    password = PasswordField('Password', validators=[DataRequired()])
 
 # User loader for Flask-Login
 @login_manager.user_loader
@@ -126,17 +130,35 @@ def register():
     form = RegisterForm()
     if form.validate_on_submit():
         try:
+            # Check if user already exists
+            try:
+                existing_user = auth.get_user_by_email(form.email.data)
+                flash('Email already in use. Please use a different email or try logging in.', 'warning')
+                return render_template('register.html', form=form)
+            except auth.UserNotFoundError:
+                # User doesn't exist, proceed with creation
+                pass
+
+            # Create user in Firebase
             user = auth.create_user(
                 email=form.email.data,
                 password=form.password.data,
                 display_name=form.name.data,
             )
-            flash('User created successfully! Please log in.', 'success')
+            
+            flash('Account created successfully! Please log in.', 'success')
             return redirect(url_for('login'))
+
         except auth.EmailAlreadyExistsError:
-            flash('Email already exists. Please use a different email.', 'danger')
+            flash('An account with this email already exists.', 'danger')
+        except auth.WeakPasswordError:
+            flash('Password is too weak. Please choose a stronger password.', 'danger')
+        except auth.InvalidEmailError:
+            flash('Invalid email address. Please check and try again.', 'danger')
         except Exception as e:
-            flash(f'Error creating user: {str(e)}', 'danger')
+            app.logger.error(f'Error during registration: {str(e)}')
+            flash('An unexpected error occurred. Please try again later.', 'danger')
+
     return render_template('register.html', form=form)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -144,8 +166,7 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         try:
-            user = auth.get_user_by_email(form.email.data)
-            # Verify password using Firebase Auth REST API
+            # Authenticate with Firebase
             url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={os.getenv('FIREBASE_API_KEY')}"
             payload = {
                 "email": form.email.data,
@@ -153,18 +174,38 @@ def login():
                 "returnSecureToken": True
             }
             response = requests.post(url, json=payload)
+            
             if response.status_code == 200:
+                # Successfully authenticated
+                auth_data = response.json()
+                user = auth.get_user_by_email(form.email.data)
                 user_obj = User(user.uid, user.email, user.display_name)
                 login_user(user_obj)
+                
                 flash('Logged in successfully!', 'success')
-                return redirect(url_for('dashboard'))
+                next_page = request.args.get('next')
+                return redirect(next_page or url_for('dashboard'))
             else:
-                flash('Invalid email or password.', 'danger')
-        except auth.UserNotFoundError:
-            flash('Invalid email or password.', 'danger')
+                error_data = response.json()
+                error_message = error_data.get('error', {}).get('message', 'Unknown error')
+                
+                if error_message == 'EMAIL_NOT_FOUND':
+                    flash('No account found with this email. Please check your email or register.', 'danger')
+                elif error_message == 'INVALID_PASSWORD':
+                    flash('Incorrect password. Please try again.', 'danger')
+                elif error_message == 'USER_DISABLED':
+                    flash('This account has been disabled. Please contact support.', 'danger')
+                else:
+                    flash('Login failed. Please check your credentials and try again.', 'danger')
+                
+        except requests.RequestException:
+            flash('Unable to connect to the authentication server. Please try again later.', 'danger')
         except Exception as e:
-            flash(f'Error logging in: {str(e)}', 'danger')
+            app.logger.error(f'Error during login: {str(e)}')
+            flash('An unexpected error occurred. Please try again later.', 'danger')
+
     return render_template('login.html', form=form)
+
 
 @app.route('/google_login')
 def google_login():
