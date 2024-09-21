@@ -25,13 +25,21 @@ load_dotenv()
 cred = credentials.Certificate(os.getenv('FIREBASE_CREDENTIALS'))
 firebase_admin.initialize_app(cred)
 
-# Initialize Flask app and CSRF protection
+# Initialize Flask app
 app = Flask(__name__)
-app.secret_key = os.getenv('FLASK_SECRET_KEY')
+
+# Load configuration from environment variables or use default values
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'default_secret_key')  # Use a secure default if not set
+app.config['WTF_CSRF_SECRET_KEY'] = os.getenv('WTF_CSRF_SECRET_KEY', 'default_csrf_secret_key')  # Same here
+
+# CSRF protection setup
 csrf = CSRFProtect(app)
 
-app.config['SECRET_KEY'] = 'your_secret_key'
-app.config['WTF_CSRF_SECRET_KEY'] = 'your_csrf_secret_key'
+# Secure cookie settings
+app.config['SESSION_COOKIE_SECURE'] = True  # Ensure cookies are only sent over HTTPS
+app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access to cookies
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Control how cookies are sent with cross-site requests
+
 
 # Secret key for JWT encoding/decoding
 JWT_SECRET = os.getenv('JWT_SECRET_KEY')

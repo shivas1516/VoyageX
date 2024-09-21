@@ -55,6 +55,15 @@
     
                 <button type="submit" class="btn btn-primary">Login</button>
             </form>
+            <!-- Separator -->
+            <div class="separator">--------- or ---------</div>
+
+                <!-- Google OAuth Login Button -->
+                <a href="{{ url_for('google_login_callback') }}" class="google-login">
+                    <img src="https://www.google.com/favicon.ico" alt="Google logo">
+                    Register with Google
+                </a>
+            </div>
         </div>
     </div>
     {% endblock %}
