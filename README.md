@@ -1,3 +1,5 @@
+> **Notice**: I use [Render's free tier](https://docs.render.com/free#other-limitations) to deploy this web application. As a result, the initial loading may take up to 2-3 minutes for the web server to start.
+
 # AI Travel Planner (Itinerary Generator)
 
 This project is an AI-powered travel itinerary generator developed as part of the Altan Fellowship Program tasks. The tool creates a personalized travel plan for users based on their specific preferences, including destinations, travel dates, budget, activities, transportation, and food choices. This planner automates travel itinerary creation with real-time weather conditions, budget breakdowns, and suggestions for accommodations, meals, activities, and transportation.
