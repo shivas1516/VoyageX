@@ -27,7 +27,7 @@ body {
 }
 
 /* Login card */
-.login-card {
+.auth-card {
     background-color: #ffffff;
     max-width: 600px;
     margin: 50px 50px 0 50px; /* Left-aligned */

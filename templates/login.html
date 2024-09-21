@@ -36,56 +36,44 @@
 
     {% block content %}
     <div class="container">
-        <!-- Login Card -->
-        <div class="login-card">
+        <div class="auth-card">
             <h1>Login</h1>
             <form method="post">
-                {{ form.csrf_token }}
-                
+                {{ form.csrf_token }}  <!-- Include CSRF token -->
+    
                 <label for="email">Email:</label>
-                {{ form.email(id="email", class="form-control") }}
+                {{ form.email(id="email", class="form-control") }}  <!-- Email field -->
                 {% for error in form.email.errors %}
                     <span class="error-message">{{ error }}</span>
                 {% endfor %}
-            
+    
                 <label for="password">Password:</label>
-                {{ form.password(id="password", class="form-control") }}
+                {{ form.password(id="password", class="form-control") }}  <!-- Password field -->
                 {% for error in form.password.errors %}
                     <span class="error-message">{{ error }}</span>
                 {% endfor %}
-            
+    
                 <button type="submit" class="btn btn-primary">Login</button>
             </form>
-            
-            <!-- Separator -->
-            <div class="separator">--------- or ---------</div>
-    
-            <!-- Google OAuth Login Button -->
-            <a href="{{ url_for('google_login') }}" class="google-login">
-                <img src="https://www.google.com/favicon.ico" alt="Google logo">
-                Login with Google
-            </a>
         </div>
     </div>
     {% endblock %}
+    
 
     <!-- Footer -->
     <footer>
         &copy; 2024 Your Website. All rights reserved.
     </footer>
 
-    <!-- Flash Messages as Pop-ups -->
-    <script type="text/javascript">
-        // Ensure that messages are defined and non-empty
+    <script>
         const messages = {{ messages | tojson | safe }};
-        if (messages && messages.length > 0) {
-            messages.forEach(function(item) {
-                const category = item[0];  // Get category (e.g., 'success', 'danger')
-                const message = item[1];   // Get the message content
-                showFlashMessage(message); // Show message as a browser alert
+        if (messages.length > 0) {
+            messages.forEach(message => {
+                console.log(message);  // Or display it in the UI as needed
             });
         }
     </script>
+    
 
 </body>
 </html>

@@ -17,7 +17,7 @@
     {% block content %}
     <div class="container">
         <!-- Register Card -->
-        <div class="login-card">
+        <div class="auth-card">
             <h1>Register</h1>
             <form method="post">
                 {{ form.csrf_token }}
@@ -47,7 +47,7 @@
             <div class="separator">--------- or ---------</div>
     
             <!-- Google OAuth Login Button -->
-            <a href="{{ url_for('google_login') }}" class="google-login">
+            <a href="{{ url_for('google_login_callback') }}" class="google-login">
                 <img src="https://www.google.com/favicon.ico" alt="Google logo">
                 Register with Google
             </a>
@@ -71,5 +71,14 @@
             });
         });
     </script>
+    <script>
+        const messages = {{ messages | tojson | safe }};
+        if (messages.length > 0) {
+            messages.forEach(message => {
+                console.log(message);  // Or display it in the UI as needed
+            });
+        }
+    </script>
+    
 </body>
 </html>
