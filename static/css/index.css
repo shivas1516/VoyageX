@@ -45,7 +45,7 @@ nav ul li a {
 }
 
 nav ul li a:hover {
-    background-color: #2ba4e6;
+    background-color: #ff004f;
     border-radius: 5px;
 }
 
@@ -100,9 +100,9 @@ nav ul li a:hover {
     border-radius: 30px;
   position: absolute;
     transition: background-color 0.3s, transform 0.3s;
-    top: 83%;
-    left: 55%;
-    width: 200px;
+    top: 69%;
+    left: 48%;
+    width: 300px;
     height: 50px;
 }
 
@@ -110,10 +110,6 @@ nav ul li a:hover {
     text-decoration: none;
     color: white;
     font-size: 10px;
-    
-
-
-
 }
 
 .btn:hover {
@@ -184,5 +180,5 @@ nav ul li a:hover {
 }
 
 .copy-right i {
-    color: #2ba4e6;
+    color: #ff004f;
 }

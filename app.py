@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, get_flashed_messages
+from flask_login import login_user
 import firebase_admin
 from firebase_admin import credentials, auth
 import logging
@@ -100,132 +101,81 @@ def landing():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    # Clear any existing session data to prevent redirection loops
-    session.clear()
-    
-    form = LoginForm()
-
-    if form.validate_on_submit():
-        email = form.email.data
-        password = form.password.data
-
-        if not user_exists(email):
-            log_and_flash_error(f"Login failed: User with email {email} not found.")
-            return redirect(url_for('login'))
-
-        try:
-            user = auth.get_user_by_email(email)
-            # Note: Firebase doesn't store passwords, so we can't check them directly
-            # You might need to implement a custom password checking mechanism
-            
-            token = generate_jwt_token(user.uid)
-            session['jwt_token'] = token
-            session['user'] = email
-
-            logging.info(f"User {email} logged in successfully.")
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+        
+        user = User.query.filter_by(email=email).first()
+        
+        if user and check_password_hash(user.password, password):
+            login_user(user)
             flash('Logged in successfully!', 'success')
             return redirect(url_for('dashboard'))
-
-        except auth.AuthError as auth_error:
-            log_and_flash_error(f"Authentication error for {email}: {str(auth_error)}")
-            return redirect(url_for('login'))
-        except Exception as e:
-            log_and_flash_error(f"Unexpected error during login for {email}: {str(e)}")
-            return redirect(url_for('login'))
-
-    messages = get_flashed_messages(with_categories=True) or []
-    return render_template('login.html', form=form, messages=messages)
+        else:
+            flash('Invalid email or password', 'error')
+    
+    return render_template('login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    form = RegisterForm()
-
-    if form.validate_on_submit():
-        name = form.name.data
-        email = form.email.data
-        password = form.password.data
-
-        if user_exists(email):
-            flash('Email is already registered. Please log in.', 'warning')
-            logging.warning(f"Attempted registration with existing email: {email}")
+    if request.method == 'POST':
+        name = request.form.get('name')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        
+        existing_user = User.query.filter_by(email=email).first()
+        
+        if existing_user:
+            flash('Email already registered. Please log in.', 'warning')
             return redirect(url_for('login'))
-
+        
         if len(password) < 8:
-            flash('Password must be at least 8 characters long.', 'danger')
-            return redirect(url_for('register'))
-
-        try:
-            user = auth.create_user(
-                email=email,
-                password=password,  # Firebase will handle password hashing
-                display_name=name
-            )
-            
-            logging.info(f"User {email} registered successfully.")
-            flash('Registration successful! You can now log in.', 'success')
-            return redirect(url_for('login'))
-
-        except auth.EmailAlreadyExistsError:
-            log_and_flash_error(f"Email {email} is already in use.")
-            return redirect(url_for('register'))
-        except auth.InvalidEmailError:
-            log_and_flash_error(f"Invalid email address during registration: {email}")
-            return redirect(url_for('register'))
-        except auth.WeakPasswordError:
-            log_and_flash_error(f"Weak password attempt for {email}")
-            return redirect(url_for('register'))
-        except auth.AuthError as auth_error:
-            log_and_flash_error(f"Authentication error during registration for {email}: {str(auth_error)}")
-            return redirect(url_for('register'))
-        except Exception as e:
-            log_and_flash_error(f"Unexpected error during registration for {email}: {str(e)}")
-            return redirect(url_for('register'))
-
-    messages = get_flashed_messages(with_categories=True) or []
-    return render_template('register.html', form=form, messages=messages)
+            flash('Password must be at least 8 characters long.', 'error')
+            return render_template('register.html')
+        
+        new_user = User(name=name, email=email, password=generate_password_hash(password))
+        db.session.add(new_user)
+        db.session.commit()
+        
+        flash('Registration successful! You can now log in.', 'success')
+        return redirect(url_for('login'))
+    
+    return render_template('register.html')
 
 @app.route('/google_login')
 def google_login():
     # Generate a random state string
     state = secrets.token_urlsafe(16)
-    # Store the state in the session
     session['oauth_state'] = state
     redirect_uri = url_for('google_auth', _external=True)
     return google.authorize_redirect(redirect_uri, state=state)
 
 @app.route('/google_login/google/authorized')
 def google_auth():
-    # Verify the state
     if 'oauth_state' not in session or request.args.get('state') != session['oauth_state']:
-        flash('Invalid OAuth state', 'danger')
+        flash('Invalid OAuth state', 'error')
         return redirect(url_for('login'))
     
     try:
         token = google.authorize_access_token()
-        resp = google.get('userinfo')
-        user_info = resp.json()
+        user_info = google.get('userinfo').json()
         email = user_info['email']
         
-        try:
-            user_record = auth.get_user_by_email(email)
-        except auth.UserNotFoundError:
-            user_record = auth.create_user(email=email, display_name=user_info.get('name'))
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            user = User(email=email, name=user_info.get('name'))
+            db.session.add(user)
+            db.session.commit()
         
-        session['user'] = email
-        logging.info(f"User {email} logged in with Google OAuth.")
-        
-        token = generate_jwt_token(user_record.uid)
-        session['jwt_token'] = token
-        
-        # Clear the oauth_state from the session
+        login_user(user)
         session.pop('oauth_state', None)
         
+        flash('Logged in successfully with Google!', 'success')
         return redirect(url_for('dashboard'))
     except Exception as e:
-        logging.error(f"Error in Google OAuth: {str(e)}")
-        flash('An error occurred during Google login. Please try again.', 'danger')
+        flash('An error occurred during Google login. Please try again.', 'error')
         return redirect(url_for('login'))
-
+    
 @app.route('/dashboard')
 def dashboard():
     if 'user' not in session or 'jwt_token' not in session:
