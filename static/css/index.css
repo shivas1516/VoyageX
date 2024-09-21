@@ -1,0 +1,188 @@
+/* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Container for the header */
+#container {
+    height: 70px;
+    width: 100%;
+    background-color: #62b5e2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Navbar styles */
+nav ul {
+    display: flex;
+    list-style-type: none;
+}
+
+nav ul li {
+    margin-left: 20px;
+}
+
+nav ul li a {
+    color: #e1f5f5;
+    text-decoration: none;
+    font-size: 18px;
+    padding: 10px;
+    transition: background-color 0.3s;
+}
+
+nav ul li a:hover {
+    background-color: #2ba4e6;
+    border-radius: 5px;
+}
+
+/* Logo styling */
+.bb {
+    width: 150px;
+}
+
+/* Button styles for login */
+.btn1 {
+    background-color: black;
+    border-radius: 30px;
+    padding: 10px 20px;
+    transition: background-color 0.4s;
+    border: none;
+}
+
+.btn1 a {
+    text-decoration: none;
+    color: #e1f5f5;
+}
+
+.btn1:hover {
+    background-color: #c8d4d4;
+}
+
+/* Home section styling */
+.l1 {
+    background-color: #e1f5f5;
+    text-align: center;
+    padding: 120px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.l1 img {
+    width: 80%;
+    margin-top: -45px;
+    margin-bottom: 20px;
+    transition: transform 0.3s;
+    position: relative;
+}
+
+.l1 img:hover {
+    transform: scale(1.05);
+}
+
+.btn {
+    background-color: #62b5e2;
+    border-radius: 30px;
+  position: absolute;
+    transition: background-color 0.3s, transform 0.3s;
+    top: 83%;
+    left: 55%;
+    width: 200px;
+    height: 50px;
+}
+
+.btn a {
+    text-decoration: none;
+    color: white;
+    font-size: 10px;
+    
+
+
+
+}
+
+.btn:hover {
+    background-color: #35a7e4;
+    transform: scale(1.1);
+}
+
+/* About section styles */
+#about {
+    padding: 60px;
+    background-color: #f4f4f4;
+    text-align: center;
+}
+
+.con1 {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+#about h1 {
+    font-size: 2.5em;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+#about p {
+    font-size: 1.2em;
+    color: #555;
+    line-height: 1.6;
+}
+
+/* Features section */
+#features {
+    padding: 60px;
+    background-color: #f8f9fa;
+    text-align: center;
+}
+
+.box1 {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.box1 div {
+    width: 30%;
+}
+
+.box1 img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    transition: transform 0.3s;
+}
+
+.box1 img:hover {
+    transform: scale(1.05);
+}
+
+/* Footer */
+.copy-right {
+    width: 100%;
+    text-align: center;
+    padding: 25px 0;
+    color: #e1f5f5;
+    background: #262626;
+}
+
+.copy-right i {
+    color: #2ba4e6;
+}

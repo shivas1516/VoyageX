@@ -1,11 +1,79 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Landing Page</title>
+    <link rel="stylesheet" href="../static/css/index.css">
 </head>
 <body>
-    <h1>Welcome to the Landing Page</h1>
-    <a href="{{ url_for('login') }}">Login</a> | 
-    <a href="{{ url_for('register') }}">Register</a>
+    <div id="home">
+
+        <header>
+            <div id="container">
+                <div>
+                    <img class="bb" src="../static/img/logo.png" alt="Logo">
+                </div>
+                <nav>
+                <ul class="list">
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#about">About Us</a></li>
+                    <li><a href="#features">Features</a></li>
+                </ul>
+            </nav>
+            <div>
+                <button class="btn1"><a href="{{ url_for('register') }}">Register</a></button>
+                <button class="btn1"><a href="{{ url_for('login') }}">Login</a></button>
+            </div>    
+        </div>
+    </header>
+    
+    <div class="l1">
+        <div class="content">
+            <img src="../static/img/main.png" alt="Main Image">
+            <button class="btn"><a href="{{ url_for('login') }}">Get Start</a></button>
+        </div>
+    </div>
+    
+</div>
+    <div id="about">
+        <div class="con1">
+            <h1>About Us</h1>
+            <p>Our AI-powered travel planner simplifies trip planning by creating personalized itineraries based on your preferences. Whether you're seeking adventure, relaxation, or cultural experiences, we've got you covered with the perfect plan.</p>
+        </div>
+    </div>
+
+    <div id="features">
+        <div class="con2">
+            <h1>Features</h1>
+            <div class="box1">
+                <div class="j">
+                    <img src="img/jacket-2.jpg" alt="Feature 1">
+                </div>
+                <div class="j2">
+                    <img src="img/jacket-3.jpg" alt="Feature 2">
+                </div>
+                <div class="j3">
+                    <img src="img/jacket-4.jpg" alt="Feature 3">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="copy-right">
+        <p>&copy; 2024 Siva Subramaniyan. Made with <i class="fa-solid fa-heart"></i> by him.</p>
+    </div>
+
+    <!-- Smooth scrolling -->
+    <script>
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
 </body>
 </html>
