@@ -1,14 +1,14 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
-from flask_login import login_user
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 import firebase_admin
 from firebase_admin import credentials, auth
 import logging
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
-import datetime
+from datetime import datetime, timedelta
 from flask_wtf import CSRFProtect, FlaskForm
 from wtforms import StringField, PasswordField
-from wtforms.validators import DataRequired, Email
+from wtforms.validators import DataRequired, Email, Length
 from dotenv import load_dotenv
 import os
 from authlib.integrations.flask_client import OAuth
@@ -16,9 +16,9 @@ import google.generativeai as genai
 from prompt_text import prompt
 from flask_wtf.csrf import CSRFError
 from authlib.integrations.base_client import OAuthError
+import requests
 
-
-# Load environment variables from .env file
+# Load environment variables
 load_dotenv()
 
 # Initialize Firebase
@@ -28,21 +28,33 @@ firebase_admin.initialize_app(cred)
 # Initialize Flask app
 app = Flask(__name__)
 
-# Load configuration from environment variables or use default values
-app.secret_key = os.getenv('FLASK_SECRET_KEY', 'default_secret_key')  # Use a secure default if not set
-app.config['WTF_CSRF_SECRET_KEY'] = os.getenv('WTF_CSRF_SECRET_KEY', 'default_csrf_secret_key')  # Same here
+# Set secret keys
+app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY')
+if not app.config['SECRET_KEY']:
+    raise ValueError("No SECRET_KEY set for Flask application")
 
-# CSRF protection setup
+# CSRF protection
 csrf = CSRFProtect(app)
+app.config['WTF_CSRF_SECRET_KEY'] = os.getenv('WTF_CSRF_SECRET_KEY')
+if not app.config['WTF_CSRF_SECRET_KEY']:
+    raise ValueError("No WTF_CSRF_SECRET_KEY set for Flask application")
 
 # Secure cookie settings
-app.config['SESSION_COOKIE_SECURE'] = True  # Ensure cookies are only sent over HTTPS
-app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access to cookies
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Control how cookies are sent with cross-site requests
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
+# CSRF protection
+csrf = CSRFProtect(app)
 
-# Secret key for JWT encoding/decoding
+# JWT configuration
 JWT_SECRET = os.getenv('JWT_SECRET_KEY')
+JWT_EXPIRATION = timedelta(hours=1)
+
+# Initialize LoginManager
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
 
 # Initialize OAuth
 oauth = OAuth(app)
@@ -51,58 +63,60 @@ google = oauth.register(
     client_id=os.getenv('GOOGLE_CLIENT_ID'),
     client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
     access_token_url='https://accounts.google.com/o/oauth2/token',
-    access_token_params=None,
     authorize_url='https://accounts.google.com/o/oauth2/auth',
-    authorize_params=None,
     api_base_url='https://www.googleapis.com/oauth2/v1/',
     client_kwargs={'scope': 'openid email profile'},
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration'
 )
 
-# Login Form class
+# Initialize Gemini AI
+genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
+
+# User class for Flask-Login
+class User(UserMixin):
+    def __init__(self, uid, email, display_name):
+        self.id = uid
+        self.email = email
+        self.display_name = display_name
+
+# Form classes
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
-    password = PasswordField('Password', validators=[DataRequired()])
+    password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
 
-# Register Form class
 class RegisterForm(FlaskForm):
-    name = StringField('Name', validators=[DataRequired()])
+    name = StringField('Name', validators=[DataRequired(), Length(min=2, max=50)])
     email = StringField('Email', validators=[DataRequired(), Email()])
-    password = PasswordField('Password', validators=[DataRequired()])
+    password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
+
+# User loader for Flask-Login
+@login_manager.user_loader
+def load_user(user_id):
+    try:
+        user = auth.get_user(user_id)
+        return User(user.uid, user.email, user.display_name)
+    except:
+        return None
 
 # Utility functions
 def generate_jwt_token(user_id):
-    """Generate a JWT token for a given user_id."""
     return jwt.encode({
         'sub': user_id,
-        'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+        'exp': datetime.utcnow() + JWT_EXPIRATION
     }, JWT_SECRET, algorithm='HS256')
 
 def validate_jwt_token(token):
-    """Validate the JWT token and handle token-related errors."""
     try:
-        jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
+        payload = jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
+        return payload['sub']
     except jwt.ExpiredSignatureError:
-        flash('Token expired. Please log in again.', 'warning')
-        return False
+        flash('Session expired. Please log in again.', 'warning')
+        return None
     except jwt.InvalidTokenError:
-        flash('Invalid token. Please log in again.', 'danger')
-        return False
-    return True
+        flash('Invalid session. Please log in again.', 'danger')
+        return None
 
-def user_exists(email):
-    """Check if a user exists in Firebase by their email."""
-    try:
-        auth.get_user_by_email(email)
-        return True
-    except firebase_admin.auth.UserNotFoundError:
-        return False
-
-def log_and_flash_error(message, category='danger'):
-    """Helper function to log errors and flash messages."""
-    logging.error(message)
-    flash(message, category)
-
+# Routes
 @app.route('/')
 def landing():
     return render_template('landing.html')
@@ -110,156 +124,99 @@ def landing():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegisterForm()
-    messages = []  # Initialize messages
-    if request.method == 'POST':
-        name = request.form.get('name')
-        email = request.form.get('email')
-        password = request.form.get('password')
-
-        # Firebase Email/Password Registration
+    if form.validate_on_submit():
         try:
             user = auth.create_user(
-                email=email,
-                password=password,
-                display_name=name,
+                email=form.email.data,
+                password=form.password.data,
+                display_name=form.name.data,
             )
-            messages.append('User created successfully!')
-            flash('User created successfully!', 'success')
-            return redirect(url_for('dashboard'))
+            flash('User created successfully! Please log in.', 'success')
+            return redirect(url_for('login'))
+        except auth.EmailAlreadyExistsError:
+            flash('Email already exists. Please use a different email.', 'danger')
         except Exception as e:
-            messages.append(f'Error creating user: {e}')
-            flash(f'Error creating user: {e}', 'danger')
-
-    return render_template('register.html', form=form, messages=messages)
+            flash(f'Error creating user: {str(e)}', 'danger')
+    return render_template('register.html', form=form)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
-    messages = []  # Initialize messages
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-
-        # Firebase Email/Password login
+    if form.validate_on_submit():
         try:
-            user = auth.get_user_by_email(email)
-            # (You need to verify the password here using a REST API call)
-            flash('Logged in successfully!', 'success')
-            return redirect(url_for('dashboard'))
+            user = auth.get_user_by_email(form.email.data)
+            # Verify password using Firebase Auth REST API
+            url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={os.getenv('FIREBASE_API_KEY')}"
+            payload = {
+                "email": form.email.data,
+                "password": form.password.data,
+                "returnSecureToken": True
+            }
+            response = requests.post(url, json=payload)
+            if response.status_code == 200:
+                user_obj = User(user.uid, user.email, user.display_name)
+                login_user(user_obj)
+                flash('Logged in successfully!', 'success')
+                return redirect(url_for('dashboard'))
+            else:
+                flash('Invalid email or password.', 'danger')
+        except auth.UserNotFoundError:
+            flash('Invalid email or password.', 'danger')
         except Exception as e:
-            messages.append(f'Error logging in: {e}')
-            flash(f'Error logging in: {e}', 'danger')
-
-    return render_template('dashboard.html', form=form, messages=messages)
-
-import os
-import secrets
+            flash(f'Error logging in: {str(e)}', 'danger')
+    return render_template('login.html', form=form)
 
 @app.route('/google_login')
 def google_login():
-    try:
-        # Use Authlib's authorize_redirect method
-        return google.authorize_redirect(redirect_uri=url_for('google_login_callback', _external=True))
-    except Exception as e:
-        app.logger.error(f"Error in google_login: {str(e)}")
-        flash('An error occurred during login. Please try again.', 'danger')
-        return redirect(url_for('login'))
+    return google.authorize_redirect(redirect_uri=url_for('google_login_callback', _external=True))
 
 @app.route('/google_login/google/authorized')
 def google_login_callback():
     try:
-        # Let Authlib handle the token exchange and state verification
         token = google.authorize_access_token()
-        
-        # If we get here, state verification was successful
-        app.logger.info("State verification successful")
-        
-        # Get user info
-        resp = google.get('userinfo')
-        user_info = resp.json()
-        
-        # Check for necessary keys
-        if 'email' not in user_info or 'name' not in user_info:
-            app.logger.warning("Missing email or name in user info")
-            flash('Failed to retrieve necessary user information.', 'danger')
-            return redirect(url_for('login'))
+        user_info = google.get('userinfo').json()
+        email = user_info.get('email')
+        name = user_info.get('name')
 
-        # Check if user already exists in Firebase
+        if not email or not name:
+            raise ValueError("Missing email or name in user info")
+
         try:
-            user = auth.get_user_by_email(user_info['email'])
-            app.logger.info(f"Existing user logged in: {user_info['email']}")
-            flash('Logged in with Google', 'success')
+            user = auth.get_user_by_email(email)
         except auth.UserNotFoundError:
-            # Create a new user in Firebase with Google details
-            user = auth.create_user(
-                email=user_info['email'],
-                display_name=user_info['name'],
-            )
-            app.logger.info(f"New user registered: {user_info['email']}")
-            flash('Registered and logged in with Google', 'success')
+            user = auth.create_user(email=email, display_name=name)
 
-        # Store user session info
-        session['user'] = user_info
-        
+        user_obj = User(user.uid, user.email, user.display_name)
+        login_user(user_obj)
+        flash('Logged in with Google successfully!', 'success')
         return redirect(url_for('dashboard'))
 
     except OAuthError as e:
-        app.logger.error(f"OAuth Error: {str(e)}")
-        flash('Authentication failed. Please try again.', 'danger')
-        return redirect(url_for('landing'))
-    except auth.AuthError as e:
-        app.logger.error(f"Firebase Auth Error: {str(e)}")
-        flash('An error occurred during authentication. Please try again.', 'danger')
-        return redirect(url_for('landing'))
+        flash(f'OAuth Error: {str(e)}', 'danger')
     except Exception as e:
-        app.logger.error(f"Unexpected error in google_login_callback: {str(e)}")
-        flash('An unexpected error occurred. Please try again.', 'danger')
-        return redirect(url_for('landing'))
+        flash(f'An unexpected error occurred: {str(e)}', 'danger')
+
+    return redirect(url_for('login'))
 
 @app.route('/dashboard')
+@login_required
 def dashboard():
-    if 'user' not in session or 'jwt_token' not in session:
-        flash('You must be logged in to access this page.', 'warning')
-        return redirect(url_for('login'))
-
-    if not validate_jwt_token(session['jwt_token']):
-        return redirect(url_for('login'))
-
     return render_template('dashboard.html')
 
 @app.route('/generate_plan', methods=['POST'])
+@login_required
 def generate_content():
-    if 'user' not in session or 'jwt_token' not in session:
-        return jsonify({'success': False, 'message': 'Authentication required'}), 401
-
     data = request.json
-
     required_fields = ['fromLocation', 'startDate', 'endDate', 'startTime', 'returnTime', 
                        'groupSize', 'totalBudget', 'predefinedTheme', 'numDestinations', 
                        'travelingMethod']
     
-    for field in required_fields:
-        if field not in data:
-            return jsonify({'success': False, 'message': f'Missing required field: {field}'}), 400
+    if not all(field in data for field in required_fields):
+        return jsonify({'success': False, 'message': 'Missing required fields'}), 400
 
-    user_input = prompt.format(
-        fromLocation=data['fromLocation'],
-        startDate=data['startDate'],
-        endDate=data['endDate'],
-        startTime=data['startTime'],
-        returnTime=data['returnTime'],
-        groupSize=data['groupSize'],
-        totalBudget=data['totalBudget'],
-        predefinedTheme=data['predefinedTheme'],
-        numDestinations=data['numDestinations'],
-        travelingMethod=data['travelingMethod'],
-        destinations=', '.join(data.get('destinations', []))
-    )
+    user_input = prompt.format(**data, destinations=', '.join(data.get('destinations', [])))
     
-    print("User input for model:", user_input)  # Log the input
-
     try:
-        # Use the Gemini API to generate content
         model = genai.GenerativeModel("gemini-1.5-flash")
         response = model.generate_content(user_input)
 
@@ -269,22 +226,19 @@ def generate_content():
             return jsonify({'success': False, 'message': 'Generated content is empty'}), 500
     
     except genai.types.BlockedPromptException as e:
-        print(f"Blocked prompt error: {e}")
         return jsonify({'success': False, 'message': 'The prompt was blocked due to content safety concerns'}), 400
     except genai.types.GenerationException as e:
-        print(f"Generation error: {e}")
         return jsonify({'success': False, 'message': 'Failed to generate content due to an API error'}), 500
     except Exception as e:
-        print(f"Unexpected error generating content: {e}")
-        return jsonify({'success': False, 'message': 'An unexpected error occurred while generating content'}), 500
+        return jsonify({'success': False, 'message': f'An unexpected error occurred: {str(e)}'}), 500
 
 @app.route('/logout')
+@login_required
 def logout():
-    session.clear()
+    logout_user()
     flash('You have been logged out.', 'info')
     return redirect(url_for('landing'))
 
-# Error handler for CSRF errors
 @app.errorhandler(CSRFError)
 def handle_csrf_error(e):
     flash('CSRF token missing or incorrect.', 'danger')

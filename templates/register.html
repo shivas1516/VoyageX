@@ -4,24 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
-    <link rel="stylesheet" href="../static/css/login.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
 </head>
 <body>
-
     <!-- Top Navigation Bar -->
     <div class="navbar">
         <a href="{{ url_for('landing') }}">Home</a>
         <a href="{{ url_for('login') }}">Login</a>
     </div>
 
-    {% block content %}
     <div class="container">
         <!-- Register Card -->
         <div class="auth-card">
             <h1>Register</h1>
             <form method="post">
                 {{ form.csrf_token }}
-    
+
                 <label for="name">Name:</label>
                 {{ form.name(id="name", class="form-control") }}
                 {% for error in form.name.errors %}
@@ -42,18 +40,17 @@
                 
                 <button type="submit" class="btn btn-primary">Register</button>
             </form>
-    
+
             <!-- Separator -->
             <div class="separator">--------- or ---------</div>
-    
+
             <!-- Google OAuth Login Button -->
-            <a href="{{ url_for('google_login_callback') }}" class="google-login">
+            <a href="{{ url_for('google_login') }}" class="google-login">
                 <img src="https://www.google.com/favicon.ico" alt="Google logo">
                 Register with Google
             </a>
         </div>
     </div>
-    {% endblock %}
 
     <!-- Footer -->
     <footer>
@@ -63,22 +60,14 @@
     <!-- Display flash messages -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            var messages = {{ messages|tojson }};
-            messages.forEach(function(message) {
-                var category = message[0];
-                var text = message[1];
-                alert('[' + category + '] ' + text);
-            });
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        alert('{{ category|capitalize }}: {{ message }}');
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
         });
     </script>
-    <script>
-        const messages = {{ messages | tojson | safe }};
-        if (messages.length > 0) {
-            messages.forEach(message => {
-                console.log(message);  // Or display it in the UI as needed
-            });
-        }
-    </script>
-    
 </body>
 </html>
