@@ -150,7 +150,7 @@ def login():
             messages.append(f'Error logging in: {e}')
             flash(f'Error logging in: {e}', 'danger')
 
-    return render_template('login.html', form=form, messages=messages)
+    return render_template('dashboard.html', form=form, messages=messages)
 
 import os
 import secrets
@@ -206,15 +206,15 @@ def google_login_callback():
     except OAuthError as e:
         app.logger.error(f"OAuth Error: {str(e)}")
         flash('Authentication failed. Please try again.', 'danger')
-        return redirect(url_for('login'))
+        return redirect(url_for('landing'))
     except auth.AuthError as e:
         app.logger.error(f"Firebase Auth Error: {str(e)}")
         flash('An error occurred during authentication. Please try again.', 'danger')
-        return redirect(url_for('login'))
+        return redirect(url_for('landing'))
     except Exception as e:
         app.logger.error(f"Unexpected error in google_login_callback: {str(e)}")
         flash('An unexpected error occurred. Please try again.', 'danger')
-        return redirect(url_for('login'))
+        return redirect(url_for('landing'))
 
 @app.route('/dashboard')
 def dashboard():
