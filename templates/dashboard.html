@@ -27,103 +27,113 @@
         <img src="../static/img/banner.png" alt="" class="baa">
     </div>
 
-
     <div class="dashboard-content">
-
-        <form id="travelForm">
+        <form id="travelForm" method="POST">
+            {{ form.csrf_token }}
+    
             <div class="input-line">
                 <div class="form-group">
                     <label for="fromLocation">From Location:</label>
-                    <input type="text" id="fromLocation" name="fromLocation" required>
+                    {{ form.from_location(class="form-control") }}
                 </div>
                 <div class="form-group">
                     <label for="startDate">Start Date:</label>
-                    <input type="date" id="startDate" name="startDate" required>
+                    {{ form.start_date(class="form-control") }}
                 </div>
                 <div class="form-group">
                     <label for="endDate">End Date:</label>
-                    <input type="date" id="endDate" name="endDate" required>
+                    {{ form.end_date(class="form-control") }}
                 </div>
                 <div class="form-group">
                     <label for="predefinedTheme">Predefined Theme:</label>
-                    <select id="predefinedTheme" name="predefinedTheme" required>
-                        <option value="">Select theme</option>
-                        <option value="family">Family</option>
-                        <option value="honeymoon">Honeymoon</option>
-                        <option value="office_trip">Office Trip</option>
-                        <option value="friends_trip">Friends Trip</option>
-                        <option value="adventure">Adventure</option>
-                        <option value="relaxation">Relaxation</option>
-                        <option value="cultural">Cultural</option>
-                        <option value="nature">Nature</option>
-                        <option value="beach">Beach</option>
-                        <option value="historical">Historical</option>
-                        <option value="wildlife">Wildlife</option>
-                        <option value="food_wine">Food & Wine</option>
-                        <option value="luxury">Luxury</option>
-                        <option value="romantic_getaway">Romantic Getaway</option>
-                        <option value="solo_travel">Solo Travel</option>
-                    </select>
+                    {{ form.predefined_theme(class="form-control") }}
                 </div>
             </div>
+    
             <div class="input-line">
                 <div class="form-group">
                     <label for="startTime">Starting Time:</label>
-                    <input type="time" id="startTime" name="startTime" required>
+                    {{ form.start_time(class="form-control") }}
                 </div>
                 <div class="form-group">
                     <label for="returnTime">Returning Time:</label>
-                    <input type="time" id="returnTime" name="returnTime" required>
+                    {{ form.return_time(class="form-control") }}
                 </div>
                 <div class="form-group">
                     <label for="groupSize">Group Size:</label>
-                    <input type="number" id="groupSize" name="groupSize" required>
+                    {{ form.group_size(class="form-control") }}
                 </div>
                 <div class="form-group">
                     <label for="totalBudget">Total Budget (INR):</label>
-                    <input type="number" id="totalBudget" name="totalBudget" required>
+                    {{ form.total_budget(class="form-control") }}
                 </div>
             </div>
+    
             <div class="input-line">
-                <div class="form-group" style="flex: 0 0 24%;">
+                <div class="form-group">
                     <label for="numDestinations">Number of Destinations:</label>
-                    <input type="number" id="numDestinations" name="numDestinations" min="1" value="1" required>
+                    {{ form.num_destinations(class="form-control", onchange="updateDestinations()") }}
                 </div>
-                <div class="form-group" style="flex: 0 0 24%;">
+                <div class="form-group">
                     <label for="travelingMethod">Traveling Method:</label>
-                    <select id="travelingMethod" name="travelingMethod" required>
-                        <option value="">Select traveling method</option>
-                        <option value="air">Air</option>
-                        <option value="train">Train</option>
-                        <option value="bus">Bus</option>
-                        <option value="car">Car</option>
-                        <option value="mix">Mix</option>
-                    </select>
+                    {{ form.traveling_method(class="form-control", onchange="updateTravelPreferences()") }}
                 </div>
             </div>
-            <div id="destinationsContainer"></div>
+    
+            <div id="destinationsContainer">
+                <!-- Destination input fields will be populated here -->
+            </div>
+    
             <div class="submit-container">
-                <button type="submit">Submit</button>
+                <button type="submit" class="btn btn-primary">Submit</button>
             </div>
         </form>
     
-        <div id="loading-indicator" style="display: none;">Loading...</div> <!-- Added loading indicator -->
+        <div id="loading-indicator" style="display: none;">Loading...</div>
     
-    </div>
-    <div class="card_bg">
-        <div id="responseContainer">
-            <h2>Travel Plan</h2>
-            <div id="responseContent"></div>
-            <button id="downloadPdf">Download as PDF</button>
+        <div class="card_bg">
+            <div id="responseContainer">
+                <h2>Travel Plan</h2>
+                <div id="responseContent"></div>
+                <button id="downloadPdf">Download as PDF</button>
+            </div>
         </div>
-    </div>
     
-
+        <div style="height: 100px;"></div>
+    </div>
     <div style="height: 100px;">
     </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <script>
+        function updateDestinations() {
+            const numDestinations = document.getElementById('numDestinations').value;
+            const container = document.getElementById('destinationsContainer');
+            container.innerHTML = '';
+    
+            for (let i = 1; i <= numDestinations; i++) {
+                const div = document.createElement('div');
+                div.className = 'form-group';
+                div.innerHTML = `
+                    <label for="destination${i}">Destination ${i}:</label>
+                    <input type="text" id="destination${i}" name="destination${i}" class="form-control" required>
+                `;
+                container.appendChild(div);
+            }
+        }
+    
+        function updateTravelPreferences() {
+            const travelingMethodSelect = document.getElementById('travelingMethod');
+            const isMix = travelingMethodSelect.value === 'mix';
+            document.querySelectorAll('.travel-preference').forEach(el => {
+                el.style.display = isMix ? 'block' : 'none';
+                el.querySelector('select').required = isMix;
+            });
+        }
+    </script>
+    
     <script src="../static/js/script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 </body>
 
 </html>

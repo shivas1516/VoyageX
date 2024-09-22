@@ -1,97 +1,22 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-import firebase_admin
-from firebase_admin import credentials, auth
-import logging
-from werkzeug.security import generate_password_hash, check_password_hash
-import jwt
-from datetime import datetime, timedelta
-from flask_wtf import CSRFProtect, FlaskForm
-from wtforms import StringField, PasswordField
-from wtforms.validators import DataRequired, Email, Length, EqualTo
+from flask import render_template, request, redirect, url_for, flash, jsonify
+from flask_login import  login_user, logout_user, login_required, current_user
+from firebase_admin import auth
 from dotenv import load_dotenv
-import os
-from authlib.integrations.flask_client import OAuth
 import google.generativeai as genai
 from prompt_text import prompt
 from flask_wtf.csrf import CSRFError
 from authlib.integrations.base_client import OAuthError
 import requests
+import logging
+import traceback
+import os
+from forms import User, RegisterForm, LoginForm, TravelForm
+from config import app, google, login_manager
+
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Load environment variables
 load_dotenv()
-
-# Initialize Firebase
-cred = credentials.Certificate(os.getenv('FIREBASE_CREDENTIALS'))
-firebase_admin.initialize_app(cred)
-
-# Initialize Flask app
-app = Flask(__name__)
-
-# Set secret keys
-app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY')
-if not app.config['SECRET_KEY']:
-    raise ValueError("No SECRET_KEY set for Flask application")
-
-# CSRF protection
-csrf = CSRFProtect(app)
-app.config['WTF_CSRF_SECRET_KEY'] = os.getenv('WTF_CSRF_SECRET_KEY')
-if not app.config['WTF_CSRF_SECRET_KEY']:
-    raise ValueError("No WTF_CSRF_SECRET_KEY set for Flask application")
-
-# Secure cookie settings
-app.config['SESSION_COOKIE_SECURE'] = True
-app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-
-# CSRF protection
-csrf = CSRFProtect(app)
-
-# JWT configuration
-JWT_SECRET = os.getenv('JWT_SECRET_KEY')
-JWT_EXPIRATION = timedelta(hours=1)
-
-# Initialize LoginManager
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'login'
-
-# Initialize OAuth
-oauth = OAuth(app)
-google = oauth.register(
-    name='google',
-    client_id=os.getenv('GOOGLE_CLIENT_ID'),
-    client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
-    access_token_url='https://accounts.google.com/o/oauth2/token',
-    authorize_url='https://accounts.google.com/o/oauth2/auth',
-    api_base_url='https://www.googleapis.com/oauth2/v1/',
-    client_kwargs={'scope': 'openid email profile'},
-    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration'
-)
-
-# Initialize Gemini AI
-genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
-
-# User class for Flask-Login
-class User(UserMixin):
-    def __init__(self, uid, email, display_name):
-        self.id = uid
-        self.email = email
-        self.display_name = display_name
-
-class RegisterForm(FlaskForm):
-    name = StringField('Name', validators=[DataRequired(), Length(min=2, max=50)])
-    email = StringField('Email', validators=[DataRequired(), Email()])
-    password = PasswordField('Password', validators=[
-        DataRequired(), 
-        Length(min=8, message='Password must be at least 8 characters long'),
-        EqualTo('confirm_password', message='Passwords must match')
-    ])
-    confirm_password = PasswordField('Confirm Password', validators=[DataRequired()])
-
-class LoginForm(FlaskForm):
-    email = StringField('Email', validators=[DataRequired(), Email()])
-    password = PasswordField('Password', validators=[DataRequired()])
 
 # User loader for Flask-Login
 @login_manager.user_loader
@@ -102,31 +27,15 @@ def load_user(user_id):
     except:
         return None
 
-# Utility functions
-def generate_jwt_token(user_id):
-    return jwt.encode({
-        'sub': user_id,
-        'exp': datetime.utcnow() + JWT_EXPIRATION
-    }, JWT_SECRET, algorithm='HS256')
-
-def validate_jwt_token(token):
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
-        return payload['sub']
-    except jwt.ExpiredSignatureError:
-        flash('Session expired. Please log in again.', 'warning')
-        return None
-    except jwt.InvalidTokenError:
-        flash('Invalid session. Please log in again.', 'danger')
-        return None
-
-# Routes
 @app.route('/')
 def landing():
     return render_template('landing.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    
     form = RegisterForm()
     if form.validate_on_submit():
         try:
@@ -136,7 +45,6 @@ def register():
                 flash('Email already in use. Please use a different email or try logging in.', 'warning')
                 return render_template('register.html', form=form)
             except auth.UserNotFoundError:
-                # User doesn't exist, proceed with creation
                 pass
 
             # Create user in Firebase
@@ -147,7 +55,7 @@ def register():
             )
             
             flash('Account created successfully! Please log in.', 'success')
-            return redirect(url_for('login'))
+            return redirect(url_for('dashboard'))
 
         except auth.EmailAlreadyExistsError:
             flash('An account with this email already exists.', 'danger')
@@ -163,6 +71,9 @@ def register():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    
     form = LoginForm()
     if form.validate_on_submit():
         try:
@@ -206,7 +117,6 @@ def login():
 
     return render_template('login.html', form=form)
 
-
 @app.route('/google_login')
 def google_login():
     return google.authorize_redirect(redirect_uri=url_for('google_login_callback', _external=True))
@@ -239,39 +149,87 @@ def google_login_callback():
 
     return redirect(url_for('login'))
 
-@app.route('/dashboard')
+@app.route('/dashboard', methods=['GET', 'POST'])
 @login_required
 def dashboard():
-    return render_template('dashboard.html')
+    form = TravelForm()
+    if form.validate_on_submit():
+        # Gather data from the form
+        data = {
+            'fromLocation': form.from_location.data,
+            'startDate': form.start_date.data,
+            'endDate': form.end_date.data,
+            'predefinedTheme': form.predefined_theme.data,
+            'startTime': form.start_time.data,
+            'returnTime': form.return_time.data,
+            'groupSize': form.group_size.data,
+            'totalBudget': form.total_budget.data,
+            'numDestinations': form.num_destinations.data,
+            'travelingMethod': form.traveling_method.data,
+        }
 
-@app.route('/generate_plan', methods=['POST'])
-@login_required
-def generate_content():
-    data = request.json
-    required_fields = ['fromLocation', 'startDate', 'endDate', 'startTime', 'returnTime', 
-                       'groupSize', 'totalBudget', 'predefinedTheme', 'numDestinations', 
-                       'travelingMethod']
-    
-    if not all(field in data for field in required_fields):
-        return jsonify({'success': False, 'message': 'Missing required fields'}), 400
+        # Collect destination data
+        destinations = []
+        for i in range(1, form.num_destinations.data + 1):
+            destination_field = getattr(form, f'destination{i}', None)
+            if destination_field:
+                destinations.append(destination_field.data)
 
-    user_input = prompt.format(**data, destinations=', '.join(data.get('destinations', [])))
-    
-    try:
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        response = model.generate_content(user_input)
+        data['destinations'] = destinations
+        destinations_str = ', '.join(destinations)
 
-        if response.text:
-            return jsonify({'success': True, 'text': response.text})
-        else:
-            return jsonify({'success': False, 'message': 'Generated content is empty'}), 500
-    
-    except genai.types.BlockedPromptException as e:
-        return jsonify({'success': False, 'message': 'The prompt was blocked due to content safety concerns'}), 400
-    except genai.types.GenerationException as e:
-        return jsonify({'success': False, 'message': 'Failed to generate content due to an API error'}), 500
-    except Exception as e:
-        return jsonify({'success': False, 'message': f'An unexpected error occurred: {str(e)}'}), 500
+        # Logging for debugging
+        logging.debug(f"From Location: {data['fromLocation']}, Start Date: {data['startDate']}, End Date: {data['endDate']}")
+        logging.debug(f"Destinations: {destinations_str}")
+
+        # User input for the model
+        user_input = prompt.format(
+            fromLocation=data['fromLocation'],
+            startDate=data['startDate'],
+            endDate=data['endDate'],
+            startTime=data['startTime'],
+            returnTime=data['returnTime'],
+            groupSize=data['groupSize'],
+            totalBudget=data['totalBudget'],
+            predefinedTheme=data['predefinedTheme'],
+            numDestinations=data['numDestinations'],
+            travelingMethod=data['travelingMethod'],
+            destinations=destinations_str
+        )
+
+        logging.debug(f"User Input for Model: {user_input}")
+
+        try:
+            # Call the generative model (replace with your implementation)
+            model = genai.GenerativeModel("gemini-1.5-pro")
+            response = model.generate_content(user_input)
+
+            logging.debug(f"Model Response: {response.text}")
+
+            # Return the generated plan if successful
+            if response.text:
+                return jsonify({
+                    'success': True,
+                    'plan': {
+                        'raw_text': response.text
+                    }
+                })
+            else:
+                return jsonify({'success': False, 'message': 'Generated content is empty'}), 500
+
+        except genai.types.BlockedPromptException as e:
+            logging.error(f"Blocked Prompt Exception: {e}")
+            return jsonify({'success': False, 'message': 'The prompt was blocked due to content safety concerns'}), 400
+        except genai.types.GenerationException as e:
+            logging.error(f"Generation Exception: {e}")
+            return jsonify({'success': False, 'message': 'Failed to generate content due to an API error'}), 500
+        except Exception as e:
+            logging.error(f"Unexpected Error: {str(e)}")
+            logging.error(traceback.format_exc())
+            return jsonify({'success': False, 'message': f'An unexpected error occurred: {str(e)}'}), 500
+
+    # If it's a GET request or if the form validation fails, render the form
+    return render_template('dashboard.html', form=form)
 
 @app.route('/logout')
 @login_required

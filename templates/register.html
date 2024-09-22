@@ -12,6 +12,9 @@
         <a href="{{ url_for('landing') }}">Home</a>
         <a href="{{ url_for('login') }}">Login</a>
     </div>
+    
+    <!-- Flash Messages Handler -->
+    <div id="flash-messages" style="position: fixed; top: 10px; right: 10px; z-index: 1000;"></div>
 
     <div class="container">
         <!-- Register Card -->
@@ -63,17 +66,36 @@
         &copy; 2024 Your Website. All rights reserved.
     </footer>
 
-    <!-- Display flash messages -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        alert('{{ category|capitalize }}: {{ message }}');
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-        });
-    </script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const flashMessagesContainer = document.getElementById('flash-messages');
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                showFlashMessage('{{ category }}', '{{ message }}');
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    function showFlashMessage(category, message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${category} alert-dismissible fade show`;
+        alertDiv.role = 'alert';
+        alertDiv.innerHTML = `
+            <strong>${category.charAt(0).toUpperCase() + category.slice(1)}:</strong> ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        flashMessagesContainer.appendChild(alertDiv);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            alertDiv.classList.remove('show');
+            setTimeout(() => alertDiv.remove(), 150);
+        }, 5000);
+    }
+});
+</script>
 </body>
 </html>
