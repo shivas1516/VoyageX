@@ -3,6 +3,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    font-family: Arial, sans-serif;
 }
 
 /* Smooth scrolling */
@@ -55,7 +56,7 @@ nav ul li a:hover {
 }
 
 /* Button styles for login */
-.btn1 {
+.auth_button {
     background-color: black;
     border-radius: 30px;
     padding: 10px 20px;
@@ -63,13 +64,18 @@ nav ul li a:hover {
     border: none;
 }
 
-.btn1 a {
+.auth_button a {
     text-decoration: none;
     color: #e1f5f5;
 }
 
-.btn1:hover {
-    background-color: #c8d4d4;
+.auth_button a:hover {
+    text-decoration: none;
+    color: #000000;
+}
+
+.auth_button:hover {
+    background-color: #ffffff;
 }
 
 /* Home section styling */
@@ -150,6 +156,27 @@ nav ul li a:hover {
 
 .box1 {
     display: flex;
+    justify-content: center; /* Center the images horizontally */
+    gap: 20px; /* Space between the images */
+}
+
+.box1 div {
+    width: 150px; 
+    height: 450px; 
+    overflow: hidden; 
+    border-radius: 8px; 
+}
+
+.box1 img {
+    width: auto;
+    height: auto;
+    border-radius: 8px;
+    transition: transform 0.3s;
+}
+
+
+.box1 {
+    display: flex;
     justify-content: center;
     flex-wrap: wrap;
     gap: 20px;
@@ -176,7 +203,7 @@ nav ul li a:hover {
     text-align: center;
     padding: 25px 0;
     color: #e1f5f5;
-    background: #262626;
+    background: #62b5e2;
 }
 
 .copy-right i {

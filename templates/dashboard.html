@@ -5,16 +5,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VoyageX Dashboard</title>
+    <link rel="icon" href="../static/img/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="../static/css/style.css">
 </head>
 
 <body>
+
     <div class="top-bar">
         <div class="logo"><a href="{{ url_for('landing') }}" style="text-decoration: none; color: aliceblue;">VoyageX</a></div>
         <div class="profile" id="profileIcon">
             <img src="../static/img/profile.jpg" alt="Profile" />
         </div>
     </div>
+
     <div class="profile-popup" id="profilePopup">
         <div class="profile-picture">
             <img src="../static/img/profile.jpg" alt="Profile Picture" />
@@ -22,7 +25,8 @@
         <div class="user-name">John Doe</div>
         <button class="logout-btn" id="logoutBtn">Log Out</button>
     </div>
-    <div class="gap"></div>
+
+    <div class="dashboard-banner"></div>
     <div class="banner">
         <img src="../static/img/banner.png" alt="" class="baa">
     </div>
@@ -92,45 +96,15 @@
         <div id="loading-indicator" style="display: none;">Loading...</div>
     
         <div class="card_bg">
-            <div id="responseContainer">
+            <div id="responseContainer" style="display: none;">
                 <h2>Travel Plan</h2>
                 <div id="responseContent"></div>
-                <button id="downloadPdf">Download as PDF</button>
+                <button id="downloadPdf" style="display: none;">Download as PDF</button>
             </div>
         </div>
     
         <div style="height: 100px;"></div>
-    </div>
-    <div style="height: 100px;">
-    </div>
-    
-    <script>
-        function updateDestinations() {
-            const numDestinations = document.getElementById('numDestinations').value;
-            const container = document.getElementById('destinationsContainer');
-            container.innerHTML = '';
-    
-            for (let i = 1; i <= numDestinations; i++) {
-                const div = document.createElement('div');
-                div.className = 'form-group';
-                div.innerHTML = `
-                    <label for="destination${i}">Destination ${i}:</label>
-                    <input type="text" id="destination${i}" name="destination${i}" class="form-control" required>
-                `;
-                container.appendChild(div);
-            }
-        }
-    
-        function updateTravelPreferences() {
-            const travelingMethodSelect = document.getElementById('travelingMethod');
-            const isMix = travelingMethodSelect.value === 'mix';
-            document.querySelectorAll('.travel-preference').forEach(el => {
-                el.style.display = isMix ? 'block' : 'none';
-                el.querySelector('select').required = isMix;
-            });
-        }
-    </script>
-    
+
     <script src="../static/js/script.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 

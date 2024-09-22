@@ -105,6 +105,25 @@ button:hover {
     margin-right: 10px; /* Space between icon and text */
 }
 
+#flash-messages {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    background-color: #f8f9fa; 
+    border: 1px solid #dee2e6; 
+    border-radius: 8px; 
+    padding: 20px; 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 300px; 
+    text-align: center; 
+    display: none; 
+}
+
+.flash-message {
+    margin: 10px 0; /* Spacing between messages */
+}
 
 /* Footer */
 footer {

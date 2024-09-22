@@ -53,14 +53,8 @@ def register():
                 password=form.password.data,
                 display_name=form.name.data,
             )
-            
-            flash('Account created successfully! Please log in.', 'success')
             return redirect(url_for('dashboard'))
 
-        except auth.EmailAlreadyExistsError:
-            flash('An account with this email already exists.', 'danger')
-        except auth.WeakPasswordError:
-            flash('Password is too weak. Please choose a stronger password.', 'danger')
         except auth.InvalidEmailError:
             flash('Invalid email address. Please check and try again.', 'danger')
         except Exception as e:
@@ -200,7 +194,6 @@ def dashboard():
         logging.debug(f"User Input for Model: {user_input}")
 
         try:
-            # Call the generative model (replace with your implementation)
             model = genai.GenerativeModel("gemini-1.5-pro")
             response = model.generate_content(user_input)
 
@@ -227,8 +220,7 @@ def dashboard():
             logging.error(f"Unexpected Error: {str(e)}")
             logging.error(traceback.format_exc())
             return jsonify({'success': False, 'message': f'An unexpected error occurred: {str(e)}'}), 500
-
-    # If it's a GET request or if the form validation fails, render the form
+        
     return render_template('dashboard.html', form=form)
 
 @app.route('/logout')

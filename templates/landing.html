@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Landing Page</title>
+    <title>VoyageX</title>
+    <link rel="icon" href="../static/img/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="../static/css/index.css">
 </head>
 <body>
@@ -22,8 +23,8 @@
                 </ul>
             </nav>
             <div>
-                <button class="btn1"><a href="{{ url_for('register') }}">Register</a></button>
-                <button class="btn1"><a href="{{ url_for('login') }}">Login</a></button>
+                <button class="auth_button"><a href="{{ url_for('register') }}">Register</a></button>
+                <button class="auth_button"><a href="{{ url_for('login') }}">Login</a></button>
             </div>    
         </div>
     </header>
@@ -45,19 +46,21 @@
     <div id="features">
         <div class="con2">
             <h1>Features</h1>
+            <div style="height: 20px;"></div>
             <div class="box1">
                 <div class="j">
-                    <img src="img/jacket-2.jpg" alt="Feature 1">
+                    <img src="../static/img/feature_1.png" alt="Feature 1">
                 </div>
                 <div class="j2">
-                    <img src="img/jacket-3.jpg" alt="Feature 2">
+                    <img src="../static/img/feature_2.png" alt="Feature 2">
                 </div>
                 <div class="j3">
-                    <img src="img/jacket-4.jpg" alt="Feature 3">
+                    <img src="../static/img/feature_3.png" alt="Feature 3">
                 </div>
             </div>
         </div>
     </div>
+    
 
     <div class="copy-right">
         <footer>
