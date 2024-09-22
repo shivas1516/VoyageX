@@ -1,35 +1,20 @@
-> **Notice**: I use [Render's free tier](https://docs.render.com/free#other-limitations) to deploy this web application. As a result, the initial loading may take up to 2-3 minutes for the web server to start.
+> **Notice**: I use [Render's free tier](https://docs.render.com/free#other-limitations) to deploy this web application. As a result, the initial loading may take up to 2-3 minutes for the webserver to start.
 
 # AI Travel Planner (Itinerary Generator)
 
-This project is an AI-powered travel itinerary generator developed as part of the Altan Fellowship Program tasks. The tool creates a personalized travel plan for users based on their specific preferences, including destinations, travel dates, budget, activities, transportation, and food choices. This planner automates travel itinerary creation with real-time weather conditions, budget breakdowns, and suggestions for accommodations, meals, activities, and transportation.
+This project is an AI-powered travel itinerary generator developed as part of the Altan Fellowship Program tasks. The tool creates a personalized travel plan for users based on their preferences, including destinations, travel dates, budget, activities, transportation, and food choices. This planner automates travel itinerary creation with real-time weather conditions, budget breakdowns, and suggestions for accommodations, meals, activities, and transportation.
 
 ## Table of Contents
 
-- [Features](#features)
 - [How It Works](#how-it-works)
 - [Inputs](#inputs)
 - [Outputs](#outputs)
 - [Sample Usage](#sample-usage)
-
-
-## Features
-
-- **Personalized Itinerary**: Tailors travel plans based on user preferences like theme (e.g., adventure, relaxation, family vacation), budget, group size, and selected transportation modes.
-- **Real-time Weather Updates**: Provides weather forecasts for morning, afternoon, and evening segments of the day, with appropriate suggestions on clothing and safety tips.
-- **Budget Breakdown**: Estimates the costs for activities, meals, accommodation, and transportation to ensure the itinerary fits within the user's budget.
-- **Dynamic Accommodation Suggestions**: Recommends hotels, hostels, or guesthouses based on the user’s preference and budget, including details on amenities and proximity to attractions.
-- **Day-by-Day Activity Planning**: Suggest a balanced itinerary that includes adventure, cultural immersion, sightseeing, and local experiences aligned with the selected travel theme.
-- **Meal Recommendations**: Offers dining suggestions for each meal, incorporating local cuisine and food preferences.
-- **Special Events and Local Festivals**: Incorporates local events, festivals, and parties during travel dates.
-- **Group Size Customization**: Adjusts the itinerary based on the number of travelers, offering group-specific discounts and arrangements.
-- **Travel Tips and Safety**: Provides essential travel tips, including advice on local customs, safety, and cultural etiquette.
-- **Shopping and Souvenirs**: Allocates time for shopping and suggests local crafts or souvenirs.
-- **Departure Planning**: Concludes with travel tips for returning to the origin city, including transportation options and suggested times to avoid traffic.
-
+- [Features](#features)
+  
 ## How It Works
 
-The AI Travel Planner is designed to take user inputs through a set of predefined fields such as destination, start and end dates, group size, travel preferences, and budget. Using these inputs, the planner generates a complete, day-by-day itinerary that aligns with the user’s preferences. It calculates the total budget, offers real-time weather forecasts, and recommends activities, accommodations, meals, and transportation options.
+The AI Travel Planner is designed to take user inputs through predefined fields such as destination, start and end dates, group size, travel preferences, and budget. Using these inputs, the planner generates a complete, day-by-day itinerary that aligns with the user’s preferences. It calculates the total budget, offers real-time weather forecasts, and recommends activities, accommodations, meals, and transportation options.
 
 ## Inputs
 
@@ -110,3 +95,16 @@ The AI Travel Planner provides a structured itinerary with the following details
 - **Dinner**: ₹350 per person
 - **Accommodation**: ₹1,000 per night
 
+## Features
+
+- **Personalized Itinerary**: Tailors travel plans based on user preferences like theme (e.g., adventure, relaxation, family vacation), budget, group size, and selected transportation modes.
+- **Real-time Weather Updates**: Provides weather forecasts for morning, afternoon, and evening segments of the day, with appropriate suggestions on clothing and safety tips.
+- **Budget Breakdown**: Estimates the costs for activities, meals, accommodation, and transportation to ensure the itinerary fits within the user's budget.
+- **Dynamic Accommodation Suggestions**: Recommends hotels, hostels, or guesthouses based on the user’s preference and budget, including details on amenities and proximity to attractions.
+- **Day-by-Day Activity Planning**: Suggest a balanced itinerary that includes adventure, cultural immersion, sightseeing, and local experiences aligned with the selected travel theme.
+- **Meal Recommendations**: Offers dining suggestions for each meal, incorporating local cuisine and food preferences.
+- **Special Events and Local Festivals**: Incorporates local events, festivals, and parties during travel dates.
+- **Group Size Customization**: Adjusts the itinerary based on the number of travelers, offering group-specific discounts and arrangements.
+- **Travel Tips and Safety**: Provides essential travel tips, including advice on local customs, safety, and cultural etiquette.
+- **Shopping and Souvenirs**: Allocates time for shopping and suggests local crafts or souvenirs.
+- **Departure Planning**: Concludes with travel tips for returning to the origin city, including transportation options and suggested times to avoid traffic.
