@@ -35,7 +35,7 @@ class TravelForm(FlaskForm):
     from_location = StringField('From Location', validators=[DataRequired()])
     start_date = DateField('Start Date', validators=[DataRequired()])
     end_date = DateField('End Date', validators=[DataRequired()])
-    predefined_theme = SelectField('Select a Theme',choices=[('', 'Select theme'), ('family', 'Family'), ('honeymoon', 'Honeymoon'), 
+    predefined_theme = SelectField('Predefined Theme',choices=[('', 'Select theme'), ('family', 'Family'), ('honeymoon', 'Honeymoon'), 
             ('office_trip', 'Office Trip'), ('friends_trip', 'Friends Trip'), ('adventure', 'Adventure'), ('relaxation', 'Relaxation'), 
             ('cultural', 'Cultural'), ('nature', 'Nature'), ('beach', 'Beach'), ('historical', 'Historical'), ('wildlife', 'Wildlife'), 
             ('food_wine', 'Food & Wine'), ('luxury', 'Luxury'), ('romantic_getaway', 'Romantic Getaway'), ('solo_travel', 'Solo Travel')])
@@ -43,6 +43,6 @@ class TravelForm(FlaskForm):
     return_time = TimeField('Returning Time', validators=[DataRequired()])
     group_size = IntegerField('Group Size', validators=[DataRequired()])
     total_budget = IntegerField('Total Budget (INR)', validators=[DataRequired()])
-    num_destinations = IntegerField('Number of Destinations', validators=[DataRequired()])
-    traveling_method = SelectField('Traveling Method', choices=[('', 'Select traveling method'), ('air', 'Air'), ('train', 'Train'), ('bus', 'Bus'), ('car', 'Car'), ('mix', 'Mix')])
+    num_destinations = IntegerField('Number of Destinations', validators=[DataRequired()], default=1)
+    travelingMethod = SelectField('Traveling Method', choices=[('', 'Select traveling method'), ('air', 'Air'), ('train', 'Train'), ('bus', 'Bus'), ('car', 'Car'), ('mix', 'Mix')])
     destinations = FieldList(FormField(DestinationForm), min_entries=1)

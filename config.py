@@ -1,13 +1,10 @@
 import firebase_admin
 from firebase_admin import credentials
-import google.generativeai as genai
 from flask_wtf import CSRFProtect
-from dotenv import load_dotenv
 import os
 from flask import Flask
 from datetime import timedelta
 from authlib.integrations.flask_client import OAuth
-from flask_login import LoginManager
 
 # Initialize Firebase
 cred = credentials.Certificate(os.getenv('FIREBASE_CREDENTIALS'))
@@ -53,11 +50,3 @@ google = oauth.register(
 
 # Initialize Firebase
 firebase_admin.initialize_app(cred)
-
-# Initialize LoginManager
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'login'
-
-# Initialize Gemini AI
-genai.configure(api_key=os.getenv('GEMINI_API_KEY'))

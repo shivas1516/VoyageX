@@ -76,6 +76,7 @@ nav ul li a:hover {
 
 .auth_button:hover {
     background-color: #ffffff;
+    color: #000000;
 }
 
 /* Home section styling */

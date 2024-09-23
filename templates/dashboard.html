@@ -12,7 +12,9 @@
 <body>
 
     <div class="top-bar">
-        <div class="logo"><a href="{{ url_for('landing') }}" style="text-decoration: none; color: aliceblue;">VoyageX</a></div>
+        <div class="logo"><a href="{{ url_for('landing') }}">
+            <img class="bb" src="../static/img/logo.png" alt="Logo" style="width:150px; margin-top: 7px;">
+        </a></div>
         <div class="profile" id="profileIcon">
             <img src="../static/img/profile.jpg" alt="Profile" />
         </div>
@@ -20,11 +22,14 @@
 
     <div class="profile-popup" id="profilePopup">
         <div class="profile-picture">
-            <img src="../static/img/profile.jpg" alt="Profile Picture" />
+            <img src="{{ url_for('static', filename='img/profile.jpg') }}" alt="Profile Picture" />
         </div>
-        <div class="user-name">John Doe</div>
-        <button class="logout-btn" id="logoutBtn">Log Out</button>
+        <div class="user-name">{{ user.email }}</div>
+        <form action="{{ url_for('logout') }}" method="POST" style="display: inline;">
+            <button type="submit" class="logout-btn">Log Out</button>
+        </form>               
     </div>
+      
 
     <div class="dashboard-banner"></div>
     <div class="banner">
@@ -76,11 +81,11 @@
             <div class="input-line">
                 <div class="form-group">
                     <label for="numDestinations">Number of Destinations:</label>
-                    {{ form.num_destinations(class="form-control", onchange="updateDestinations()") }}
+                    {{ form.num_destinations(class="form-control",id="numDestinations") }}
                 </div>
                 <div class="form-group">
                     <label for="travelingMethod">Traveling Method:</label>
-                    {{ form.traveling_method(class="form-control", onchange="updateTravelPreferences()") }}
+                    {{ form.travelingMethod(class="form-control", id="travelingMethod") }}
                 </div>
             </div>
     
@@ -101,13 +106,59 @@
                 <div id="responseContent"></div>
                 <button id="downloadPdf" style="display: none;">Download as PDF</button>
             </div>
-        </div>
-    
+        </div>        
+    </div>    
+
         <div style="height: 100px;"></div>
 
     <script src="../static/js/script.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#travelForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                $.ajax({
+                    url: '/dashboard',
+                    type: 'POST',
+                    data: $(this).serialize(),
+                    success: function(response) {
+                        if (response.success) {
+                            $('#responseContent').html(response.plan.raw_text);
+                            $('#responseContainer').show();
+                            $('#downloadPdf').show();
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        alert('An error occurred: ' + error);
+                    }
+                });
+            });
 
+            $('#downloadPdf').on('click', function() {
+                // Create a new jsPDF instance
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+
+                // Get the HTML content
+                const content = $('#responseContent').html();
+
+                // Add the content to the PDF
+                doc.html(content, {
+                    callback: function(doc) {
+                        // Save the PDF
+                        doc.save('travel_plan.pdf');
+                    },
+                    x: 15,
+                    y: 15,
+                    width: 170, // Adjust the width as needed
+                    windowWidth: 650 // Adjust this value to match your content width
+                });
+            });
+        });
+    </script>
 </body>
 
 </html>

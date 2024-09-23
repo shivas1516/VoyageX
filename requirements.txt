@@ -9,3 +9,4 @@ google-generativeai
 requests
 gunicorn
 email_validator
+markdown

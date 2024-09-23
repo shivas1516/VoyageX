@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, url_for, flash, jsonify
+from flask import render_template, request, redirect, url_for, flash, jsonify, session
 from flask_login import  login_user, logout_user, login_required, current_user
 from firebase_admin import auth
 from dotenv import load_dotenv
@@ -7,16 +7,24 @@ from prompt_text import prompt
 from flask_wtf.csrf import CSRFError
 from authlib.integrations.base_client import OAuthError
 import requests
-import logging
 import traceback
 import os
+import logging
 from forms import User, RegisterForm, LoginForm, TravelForm
-from config import app, google, login_manager
-
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+from config import app, google
+from flask_login import LoginManager
+import markdown
 
 # Load environment variables
 load_dotenv()
+
+# Initialize Gemini AI
+genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+
+# Initialize LoginManager
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
 
 # User loader for Flask-Login
 @login_manager.user_loader
@@ -29,6 +37,7 @@ def load_user(user_id):
 
 @app.route('/')
 def landing():
+    app.logger.info(f"Landing page accessed. User authenticated: {current_user.is_authenticated}")
     return render_template('landing.html')
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -108,7 +117,7 @@ def login():
         except Exception as e:
             app.logger.error(f'Error during login: {str(e)}')
             flash('An unexpected error occurred. Please try again later.', 'danger')
-
+    
     return render_template('login.html', form=form)
 
 @app.route('/google_login')
@@ -146,9 +155,18 @@ def google_login_callback():
 @app.route('/dashboard', methods=['GET', 'POST'])
 @login_required
 def dashboard():
+    # Fetch the current user's email from Firebase
+    try:
+        user = auth.get_user(current_user.id)  # Assuming current_user.id corresponds to Firebase user ID
+    except Exception as e:
+        logging.error(f"Error fetching user: {str(e)}")
+        flash('Could not retrieve user information. Please try again later.', 'danger')
+        return redirect(url_for('landing')) 
+    
     form = TravelForm()
+
     if form.validate_on_submit():
-        # Gather data from the form
+        # Gather main form data
         data = {
             'fromLocation': form.from_location.data,
             'startDate': form.start_date.data,
@@ -159,24 +177,27 @@ def dashboard():
             'groupSize': form.group_size.data,
             'totalBudget': form.total_budget.data,
             'numDestinations': form.num_destinations.data,
-            'travelingMethod': form.traveling_method.data,
+            'travelingMethod' : form.travelingMethod.data,
         }
 
-        # Collect destination data
+        # Collect destination data from the dynamic FieldList
         destinations = []
-        for i in range(1, form.num_destinations.data + 1):
-            destination_field = getattr(form, f'destination{i}', None)
-            if destination_field:
-                destinations.append(destination_field.data)
+        for destination_form in form.destinations:
+            destinations.append({
+                'destination': destination_form.destination.data,
+                'hotel': destination_form.hotel.data,
+                'travel_preference': destination_form.travel_preference.data,
+                'number_of_days': destination_form.number_of_days.data
+            })
 
         data['destinations'] = destinations
-        destinations_str = ', '.join(destinations)
 
-        # Logging for debugging
-        logging.debug(f"From Location: {data['fromLocation']}, Start Date: {data['startDate']}, End Date: {data['endDate']}")
-        logging.debug(f"Destinations: {destinations_str}")
+        # Format destinations into a string for the model prompt
+        destinations_str = ', '.join([
+            f"{d['destination']} (Hotel: {d['hotel']}, Stay: {d['number_of_days']} days)"
+            for d in destinations
+        ])
 
-        # User input for the model
         user_input = prompt.format(
             fromLocation=data['fromLocation'],
             startDate=data['startDate'],
@@ -191,20 +212,19 @@ def dashboard():
             destinations=destinations_str
         )
 
-        logging.debug(f"User Input for Model: {user_input}")
-
+        # Model API Call
         try:
             model = genai.GenerativeModel("gemini-1.5-pro")
             response = model.generate_content(user_input)
 
-            logging.debug(f"Model Response: {response.text}")
-
-            # Return the generated plan if successful
             if response.text:
+                # Convert Markdown to HTML
+                html_response = markdown.markdown(response.text)
+
                 return jsonify({
                     'success': True,
                     'plan': {
-                        'raw_text': response.text
+                        'raw_text': html_response
                     }
                 })
             else:
@@ -213,20 +233,20 @@ def dashboard():
         except genai.types.BlockedPromptException as e:
             logging.error(f"Blocked Prompt Exception: {e}")
             return jsonify({'success': False, 'message': 'The prompt was blocked due to content safety concerns'}), 400
-        except genai.types.GenerationException as e:
-            logging.error(f"Generation Exception: {e}")
-            return jsonify({'success': False, 'message': 'Failed to generate content due to an API error'}), 500
         except Exception as e:
             logging.error(f"Unexpected Error: {str(e)}")
             logging.error(traceback.format_exc())
             return jsonify({'success': False, 'message': f'An unexpected error occurred: {str(e)}'}), 500
-        
-    return render_template('dashboard.html', form=form)
 
-@app.route('/logout')
+    return render_template('dashboard.html', form=form, user=user)
+
+@app.route('/logout', methods=['POST'])
 @login_required
 def logout():
+    app.logger.info(f"Logout initiated for user: {current_user.email}")
     logout_user()
+    session.clear()
+    app.logger.info("User logged out and session cleared")
     flash('You have been logged out.', 'info')
     return redirect(url_for('landing'))
 

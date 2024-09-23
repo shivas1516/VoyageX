@@ -16,6 +16,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    height: 50px
 }
 
 .logo {
@@ -74,36 +75,28 @@ label {
     font-weight: bold;
 }
 
-input, select, textarea {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    box-sizing: border-box;
-}
-
 textarea {
     resize: none;
     height: 2.4em;
     overflow: hidden;
 }
 
-/* Style for input and textarea */
 input, select, textarea {
     width: 100%;
     padding: 8px;
-    background-color: #e1f5f5; /* Keep this color on focus */
-    color: #333; /* Text color */
-    border: 1px solid #9f9d9d; /* Vibrant Blue border */
+    background-color: #e1f5f5; 
+    color: #333; 
+    border: 2px solid #5a5a5a;
     border-radius: 4px;
     box-sizing: border-box;
+    font-family: 'Arial', sans-serif; 
+    font-size: 16px; 
 }
 
-/* Change border color on focus */
 input:focus, select:focus, textarea:focus {
     outline: none;
-    border-color: #9f9d9d; /* Soft Aqua for focused input */
-    background-color: #e1f5f5; /* Keep background color consistent on focus */
+    border-color: #9f9d9d;
+    background-color: #e1f5f5; 
 }
 
 /* Label styling to match theme */
@@ -113,8 +106,6 @@ label {
     font-weight: bold;
     color: #1d1e1e; /* Vibrant Blue for label */
 }
-
-
 
 button {
     display: block;
@@ -178,7 +169,6 @@ button:hover {
 }
 
 
-/* Base styles */
 .profile {
     width: 40px;
     height: 40px;
@@ -239,8 +229,9 @@ button:hover {
     padding: 8px 16px;
     border-radius: 4px;
     cursor: pointer;
-    width: 100%; /* Full width for better responsiveness */
-    box-sizing: border-box; /* Ensures padding and border are included in the width */
+    width: 100%; 
+    box-sizing: border-box; 
+    margin-left: 3px;
 }
 .baa{
     width: 800px;
@@ -280,7 +271,7 @@ button:hover {
     }
 
     .profile-popup {
-        right: 10px; /* Adjust right position for smaller screens */
+        right: 10px; 
         padding: 15px;
     }
 
@@ -306,8 +297,8 @@ button:hover {
     }
 
     .profile-popup {
-        width: 90%; /* Make popup wider for small screens */
-        left: 5%; /* Center the popup horizontally */
+        width: 90%; 
+        left: 5%; 
         right: 5%;
         top: 50px;
         padding: 10px;
