@@ -142,19 +142,6 @@ button:hover {
     line-height: 20px;
 }
 
-.eye-icon {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
-    color: #888;
-}
-
-.eye-icon:hover {
-    color: #333;
-}
-
 /* Footer */
 footer {
     background-color: #62b5e2;

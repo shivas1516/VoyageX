@@ -6,6 +6,7 @@
     <title>VoyageX</title>
     <link rel="icon" href="../static/img/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="../static/css/index.css">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;800&display=swap" rel="stylesheet">
 </head>
 <body>
     <div id="home">
@@ -17,28 +18,46 @@
                 </div>
                 <nav>
                 <ul class="list">
-                    <li><a href="#home">Home</a></li>
-                    <li><a href="#about">About Us</a></li>
+                    <li><a href="#about">About</a></li>
                     <li><a href="#features">Features</a></li>
+                    <li><a href="https://github.com/shivas1516/VoyageX">Code Base</a></li>
+                    <li><a href="https://drive.google.com/file/d/157VztcQ1K7lfntU4_-Es5n0rMq-Vapmp/view?usp=sharing">Documentation</a></li>
                 </ul>
             </nav>
-            <div>
-                <button class="auth_button"><a href="{{ url_for('register') }}">Register</a></button>
-                <button class="auth_button"><a href="{{ url_for('login') }}">Login</a></button>
-            </div>    
+            <div style="position: relative;">
+                <!-- GitHub Issues Icon -->
+                <a href="https://github.com/shivas1516/VoyageX/issues" target="_blank" style="position: absolute; top: -9px; right: 175px; text-align: center; text-decoration: none;">
+                    <div style="margin-right: 0; margin-top: 7px;">
+                        <img src="../static/img/github.png" alt="GitHub Icon" style="width: 55px; height: 50px;">
+                        <p style="font-size: 12px; margin: 0; text-decoration: none; margin-top: -13px; color: black;">Issues</p>
+                    </div>
+                </a>
+                
+                <!-- Register and Login Buttons -->
+                <div style="padding-top: 10px;">
+                    <button class="auth_button">
+                        <a href="{{ url_for('register') }}">Register</a>
+                    </button>
+                    <button class="auth_button">
+                        <a href="{{ url_for('login') }}">Login</a>
+                    </button>                    
+                </div>
+            </div>            
+            </div>                       
         </div>
     </header>
     
     <div class="l1">
         <div class="content">
-            <img src="../static/img/main.png" alt="Main Image">
+            <div style="height: 80px;"></div>
+            <img src="../static/img/main.png" alt="Main Image" style="pointer-events: none;">
         </div>
     </div>
     
 </div>
     <div id="about">
         <div class="con1">
-            <h1>About Us</h1>
+            <h1>About</h1>
             <p>Our AI-powered travel planner simplifies trip planning by creating personalized itineraries based on your preferences. Whether you're seeking adventure, relaxation, or cultural experiences, we've got you covered with the perfect plan.</p>
         </div>
     </div>
@@ -48,20 +67,22 @@
             <h1>Features</h1>
             <div style="height: 20px;"></div>
             <div class="box1">
-                <div class="j">
-                    <img src="../static/img/feature_1.png" alt="Feature 1">
+                <div class="Feature 1">
+                    <img src="../static/img/F1.png" alt="Feature 1">
+                    <p style="text-align: center; font-size: 14px; color: #747474; font-weight: 600; font-family: 'Open Sans', sans-serif;">Simple and Intuitive Interface</p>
                 </div>
-                <div class="j2">
-                    <img src="../static/img/feature_3.png" alt="Feature 2">
+                <div class="Feature 2">
+                    <img src="../static/img/F2.png" alt="Feature 2">
+                    <p style="text-align: center; font-size: 14px; color: #747474; font-weight: 600; font-family: 'Open Sans', sans-serif;">24/7 Assistance</p>
                 </div>
-                <div class="j3">
-                    <img src="../static/img/feature_2.png" alt="Feature 3">
-                </div>
+                <div class="Feature 3">
+                    <img src="../static/img/F3.png" alt="Feature 3">
+                    <p style="text-align: center; font-size: 14px; color: #747474; font-weight: 600; font-family: 'Open Sans', sans-serif;">Personalized AI Planner</p>
+                </div>                            
             </div>
         </div>
     </div>
     
-
     <div class="copy-right">
         <footer>
             &copy; 2024 Your Website. All rights reserved.

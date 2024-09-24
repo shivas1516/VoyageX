@@ -20,7 +20,9 @@
     <div class="container">
         <!-- Register Card -->
         <div class="auth-card">
-            <img class="loginimg" src="../static/img/logo-removebg-preview.png " width="200" height="50">
+            <a href="{{ url_for('landing') }}">
+                <img class="loginimg" src="../static/img/logo-removebg-preview.png" width="200" height="50" alt="Logo">
+            </a>            
             <h1>Register</h1>
             <form method="post">
                 {{ form.csrf_token }}

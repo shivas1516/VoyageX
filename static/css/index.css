@@ -55,28 +55,28 @@ nav ul li a:hover {
     width: 150px;
 }
 
-/* Button styles for login */
+/* Button styles */
 .auth_button {
     background-color: black;
     border-radius: 30px;
     padding: 10px 20px;
-    transition: background-color 0.4s;
+    transition: background-color 0.4s, color 0.4s;
     border: none;
 }
 
 .auth_button a {
     text-decoration: none;
     color: #e1f5f5;
-}
-
-.auth_button a:hover {
-    text-decoration: none;
-    color: #000000;
+    display: block; 
 }
 
 .auth_button:hover {
     background-color: #ffffff;
     color: #000000;
+}
+
+.auth_button:hover a {
+    color: #000000; 
 }
 
 /* Home section styling */
@@ -157,39 +157,20 @@ nav ul li a:hover {
 
 .box1 {
     display: flex;
-    justify-content: center; /* Center the images horizontally */
-    gap: 20px; /* Space between the images */
+    justify-content: center; 
+    gap: 75px; 
 }
 
 .box1 div {
-    width: 150px; 
-    height: 450px; 
+    width: 300px; 
+    height: auto; 
     overflow: hidden; 
     border-radius: 8px; 
 }
 
 .box1 img {
-    width: auto;
-    height: auto;
-    border-radius: 8px;
-    transition: transform 0.3s;
-}
-
-
-.box1 {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 20px;
-}
-
-.box1 div {
-    width: 30%;
-}
-
-.box1 img {
-    width: 100%;
-    height: auto;
+    width: 300px;
+    height: 300px;
     border-radius: 8px;
     transition: transform 0.3s;
 }
