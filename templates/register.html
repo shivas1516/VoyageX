@@ -15,7 +15,7 @@
     </div>
     
     <!-- Flash Messages Handler -->
-    <div id="flash-message" style="position: fixed; top: 10px; right: 10px; z-index: 1000;"></div>
+    <div id="flash-messages" style="position: fixed; top: 10px; right: 10px; z-index: 1000;"></div>
 
     <div class="container">
         <!-- Register Card -->
@@ -68,35 +68,50 @@
     </footer>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const flashMessagesContainer = document.getElementById('flash-message');
+    document.addEventListener('DOMContentLoaded', function() {
+        const flashMessagesContainer = document.getElementById('flash-messages');
+        
+        // Example messages retrieval (replace with actual logic)
+        const messages = [
+            { category: 'info', message: 'This is an informational message.' },
+            { category: 'success', message: 'Operation successful!' }
+        ];
+        
+        // Display each message
+        messages.forEach(({ category, message }) => {
+            showFlashMessage(category, message);
+        });
+        
+        function showFlashMessage(category, message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `flash-message alert-${category}`;
+            alertDiv.innerHTML = `
+                <span><strong>${capitalize(category)}:</strong> ${message}</span>
+                <span class="closebtn">&times;</span>
+            `;
+            
+            flashMessagesContainer.appendChild(alertDiv);
+            
+            // Close on button click
+            const closeButton = alertDiv.querySelector('.closebtn');
+            closeButton.onclick = function() {
+                hideFlashMessage(alertDiv);
+            };
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => hideFlashMessage(alertDiv), 5000);
+        }
+        
+        function hideFlashMessage(element) {
+            element.style.opacity = '0'; // Fade out
+            setTimeout(() => element.remove(), 600); // Remove after fade-out
+        }
+        
+        function capitalize(text) {
+            return text.charAt(0).toUpperCase() + text.slice(1);
+        }
+    });
     
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                showFlashMessage('{{ category }}', '{{ message }}');
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-
-    function showFlashMessage(category, message) {
-        const alertDiv = document.createElement('div');
-        alertDiv.className = `alert alert-${category} alert-dismissible fade show`;
-        alertDiv.role = 'alert';
-        alertDiv.innerHTML = `
-            <strong>${category.charAt(0).toUpperCase() + category.slice(1)}:</strong> ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        `;
-        
-        flashMessagesContainer.appendChild(alertDiv);
-        
-        // Auto-dismiss after 5 seconds
-        setTimeout(() => {
-            alertDiv.classList.remove('show');
-            setTimeout(() => alertDiv.remove(), 150);
-        }, 5000);
-    }
-});
 </script>
 </body>
 </html>

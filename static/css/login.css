@@ -105,25 +105,37 @@ button:hover {
     margin-right: 10px; /* Space between icon and text */
 }
 
-#flash-messages {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1000;
-    background-color: #f8f9fa; 
-    border: 1px solid #dee2e6; 
-    border-radius: 8px; 
-    padding: 20px; 
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    width: 300px; 
-    text-align: center; 
-    display: none; 
+/* Flash Message Styling */
+.flash-message {
+    opacity: 1;
+    transition: opacity 0.6s ease-out; /* Fade-out effect */
+    padding: 15px;
+    margin-bottom: 10px;
+    background-color: #f9edbe; /* Default background color */
+    color: #856404; /* Default text color */
+    border-left: 5px solid #ffeeba;
+    border-radius: 4px;
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-.flash-message {
-    margin: 10px 0; /* Spacing between messages */
+.flash-message.hide {
+    opacity: 0;
+    transition: opacity 0.6s ease-out;
 }
+
+/* Close Button */
+.closebtn {
+    margin-left: 15px;
+    color: #856404;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 20px;
+}
+
 
 /* Footer */
 footer {

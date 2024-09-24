@@ -98,25 +98,22 @@
         </form>
     
         <div id="loading-indicator" style="display: none;">
-
-           
-<div class="spinner center">
-    <div class="spinner-blade"></div>
-    <div class="spinner-blade"></div>
-    <div class="spinner-blade"></div>
-    <div class="spinner-blade"></div>
-    <div class="spinner-blade"></div>
-    <div class="spinner-blade"></div>
-    <div class="spinner-blade"></div>
-    <div class="spinner-blade"></div>
-    <div class="spinner-blade"></div>
-    <div class="spinner-blade"></div>
-    <div class="spinner-blade"></div>
-    <div class="spinner-blade"></div>
-</div>
+        <div class="spinner center">
+            <div class="spinner-blade"></div>
+            <div class="spinner-blade"></div>
+            <div class="spinner-blade"></div>
+            <div class="spinner-blade"></div>
+            <div class="spinner-blade"></div>
+            <div class="spinner-blade"></div>
+            <div class="spinner-blade"></div>
+            <div class="spinner-blade"></div>
+            <div class="spinner-blade"></div>
+            <div class="spinner-blade"></div>
+            <div class="spinner-blade"></div>
+            <div class="spinner-blade"></div>
         </div>
-        
-    
+        </div>
+          
         <div class="card_bg">
             <div id="responseContainer" style="display: none;">
                 <div id="responseContent"></div>
@@ -128,8 +125,8 @@
     <div style="height: 100px;"></div>
 
     <script src="../static/js/script.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const form = document.getElementById('travelForm');
@@ -137,16 +134,16 @@
             const responseContent = document.getElementById('responseContent');
             const downloadPdfButton = document.getElementById('downloadPdf');
             const loadingIndicator = document.getElementById('loading-indicator');
-
+    
             form.addEventListener('submit', function (e) {
                 e.preventDefault();
-
+    
                 // Show loading indicator
                 loadingIndicator.style.display = 'block';
-
+    
                 // Gather form data
                 const formData = new FormData(form);
-
+    
                 // Fetch API call to backend
                 fetch('/dashboard', {
                     method: 'POST',
@@ -156,7 +153,7 @@
                 .then(data => {
                     // Hide loading indicator
                     loadingIndicator.style.display = 'none';
-
+    
                     if (data.success) {
                         // Display response data in the HTML
                         responseContent.innerHTML = data.plan.raw_text;
@@ -171,22 +168,35 @@
                     alert('An error occurred: ' + error);
                 });
             });
-
+    
             // Download PDF functionality
             downloadPdfButton.addEventListener('click', function () {
+                const doc = new jsPDF();
                 const content = document.getElementById('responseContent');
-                const opt = {
-                    filename: 'myPage.pdf',
-                    margin: 2,
-                    image: {type: 'jpeg', quality: 0.9},
-                    jsPDF: {format: 'letter', orientation: 'portrait'},
-                    pagebreak: {mode: 'css' }
-                  };
-
-                // Generate PDF from HTML content
-                html2pdf().set(opt).from(content).save();
+    
+                // Add the response content to the PDF
+                doc.setFontSize(12);
+                doc.setLineHeight(1.5);
+                const contentArray = content.textContent.split('\n');
+                let currentY = 20;
+    
+                for (let i = 0; i < contentArray.length; i++) {
+                    const line = contentArray[i];
+                    const splitResult = doc.splitTextToSize(line, 180); // Adjust the max width as needed
+                    for (let j = 0; j < splitResult.length; j++) {
+                        doc.text(splitResult[j], 20, currentY);
+                        currentY += 10;
+    
+                        // Add a new page if the current page is full
+                        if (currentY > 290) {
+                            currentY = 20;
+                            doc.addPage();
+                        }
+                    }
+                }
+    
+                doc.save('myPage.pdf');
             });
-            
         });
     </script>
 </body>
