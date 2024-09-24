@@ -50,7 +50,7 @@ def register():
     form = RegisterForm()
     if form.validate_on_submit():
         try:
-            # Check if user already exists
+            # Check if the user already exists
             try:
                 existing_user = auth.get_user_by_email(form.email.data)
                 flash('Email already in use. Please use a different email or try logging in.', 'warning')
@@ -73,6 +73,12 @@ def register():
             app.logger.error(f'Error during registration: {str(e)}')
             flash('An unexpected error occurred. Please try again later.', 'danger')
 
+    # Handle errors for passwords must match
+    if form.password.errors:
+        for error in form.password.errors:
+            if "match" in error:
+                flash('Confirm Password must match with Password', 'danger')
+    
     return render_template('register.html', form=form)
 
 @app.route('/login', methods=['GET', 'POST'])
