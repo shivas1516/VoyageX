@@ -20,6 +20,7 @@
     
     <div class="container">
         <div class="auth-card">
+            <img class="loginimg" src="../static/img/logo-removebg-preview.png " width="200" height="50">
             <h1>Login</h1>
             <form method="post">
                 {{ form.csrf_token }}
@@ -31,7 +32,10 @@
                 {% endfor %}
 
                 <label for="password">Password:</label>
-                {{ form.password(id="password", class="form-control") }}
+                {{ form.password(id="password", class="form-control", type="password") }}
+                <span class="eye-icon" onclick="togglePasswordVisibility()">
+                    <i id="togglePasswordIcon" class="fa fa-eye"></i>
+                </span>
                 {% for error in form.password.errors %}
                     <span class="error-message">{{ error }}</span>
                 {% endfor %}
@@ -53,26 +57,22 @@
     <footer>
         &copy; 2024 Your Website. All rights reserved.
     </footer>
-
-
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const flashMessagesContainer = document.getElementById('flash-messages');
         
-        // Example messages retrieval (replace with actual logic)
-        const messages = [
-            { category: 'info', message: 'This is an informational message.' },
-            { category: 'success', message: 'Operation successful!' }
-        ];
+        // Iterate over flash messages (assuming Flask passed messages to template)
+        const flashMessages = {{ get_flashed_messages(with_categories=true) | tojson }};
         
-        // Display each message
-        messages.forEach(({ category, message }) => {
-            showFlashMessage(category, message);
-        });
-        
+        if (flashMessages.length > 0) {
+            flashMessages.forEach(([category, message]) => {
+                showFlashMessage(category, message);
+            });
+        }
+    
         function showFlashMessage(category, message) {
             const alertDiv = document.createElement('div');
-            alertDiv.className = `flash-message alert-${category}`;
+            alertDiv.className = `flash-message alert alert-${category}`;
             alertDiv.innerHTML = `
                 <span><strong>${capitalize(category)}:</strong> ${message}</span>
                 <span class="closebtn">&times;</span>
@@ -98,8 +98,7 @@
         function capitalize(text) {
             return text.charAt(0).toUpperCase() + text.slice(1);
         }
-    });
-    
+    });    
 </script>
 </body>
 </html>

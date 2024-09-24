@@ -44,6 +44,7 @@ def landing():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
+        flash('You are already registered and logged in.', 'info')
         return redirect(url_for('dashboard'))
     
     form = RegisterForm()
@@ -63,6 +64,7 @@ def register():
                 password=form.password.data,
                 display_name=form.name.data,
             )
+            flash('Registration successful! Please log in.', 'success')
             return redirect(url_for('dashboard'))
 
         except auth.InvalidEmailError:
@@ -76,6 +78,7 @@ def register():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
+        flash('You are already logged in.', 'info')
         return redirect(url_for('dashboard'))
     
     form = LoginForm()
@@ -134,6 +137,7 @@ def google_login_callback():
         name = user_info.get('name')
 
         if not email or not name:
+            flash("Error: Missing email or name from Google user info.", 'danger')
             raise ValueError("Missing email or name in user info")
 
         try:
@@ -156,14 +160,13 @@ def google_login_callback():
 @app.route('/dashboard', methods=['GET', 'POST'])
 @login_required
 def dashboard():
-    # Fetch the current user's email from Firebase
     try:
-        user = auth.get_user(current_user.id)  # Assuming current_user.id corresponds to Firebase user ID
+        user = auth.get_user(current_user.id)
     except Exception as e:
-        logging.error(f"Error fetching user: {str(e)}")
+        app.logger.error(f"Error fetching user: {str(e)}")
         flash('Could not retrieve user information. Please try again later.', 'danger')
-        return redirect(url_for('landing')) 
-    
+        return redirect(url_for('landing'))
+
     form = TravelForm()
 
     if form.validate_on_submit():
@@ -219,7 +222,7 @@ def dashboard():
             response = model.generate_content(user_input)
 
             if response.text:
-                # Convert Markdown to HTML
+                flash('Plan generated successfully!', 'success')
                 html_response = markdown.markdown(response.text)
 
                 return jsonify({
@@ -229,15 +232,11 @@ def dashboard():
                     }
                 })
             else:
-                return jsonify({'success': False, 'message': 'Generated content is empty'}), 500
-
-        except genai.types.BlockedPromptException as e:
-            logging.error(f"Blocked Prompt Exception: {e}")
-            return jsonify({'success': False, 'message': 'The prompt was blocked due to content safety concerns'}), 400
+                flash('Failed to generate plan. Content is empty.', 'danger')
+        except genai.types.BlockedPromptException:
+            flash('The prompt was blocked due to content safety concerns.', 'danger')
         except Exception as e:
-            logging.error(f"Unexpected Error: {str(e)}")
-            logging.error(traceback.format_exc())
-            return jsonify({'success': False, 'message': f'An unexpected error occurred: {str(e)}'}), 500
+            flash(f'An unexpected error occurred: {str(e)}', 'danger')
 
     return render_template('dashboard.html', form=form, user=user)
 
@@ -257,4 +256,4 @@ def handle_csrf_error(e):
     return redirect(url_for('login'))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)
