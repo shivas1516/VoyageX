@@ -18,8 +18,9 @@ import markdown
 # Load environment variables
 load_dotenv()
 
-# Initialize Gemini AI
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+# Initialize Gemini AI with the API key
+gemini_api_key = os.getenv("GEMINI_API_KEY")
+genai.configure(api_key=gemini_api_key)
 
 # Initialize LoginManager
 login_manager = LoginManager()
@@ -214,7 +215,7 @@ def dashboard():
 
         # Model API Call
         try:
-            model = genai.GenerativeModel("gemini-1.5-pro")
+            model = genai.GenerativeModel("gemini-1.5-flash")
             response = model.generate_content(user_input)
 
             if response.text:

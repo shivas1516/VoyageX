@@ -30,7 +30,6 @@
         </form>               
     </div>
       
-
     <div class="dashboard-banner"></div>
     <div class="banner">
         <img src="../static/img/banner.png" alt="" class="baa">
@@ -98,65 +97,96 @@
             </div>
         </form>
     
-        <div id="loading-indicator" style="display: none;">Loading...</div>
+        <div id="loading-indicator" style="display: none;">
+
+           
+<div class="spinner center">
+    <div class="spinner-blade"></div>
+    <div class="spinner-blade"></div>
+    <div class="spinner-blade"></div>
+    <div class="spinner-blade"></div>
+    <div class="spinner-blade"></div>
+    <div class="spinner-blade"></div>
+    <div class="spinner-blade"></div>
+    <div class="spinner-blade"></div>
+    <div class="spinner-blade"></div>
+    <div class="spinner-blade"></div>
+    <div class="spinner-blade"></div>
+    <div class="spinner-blade"></div>
+</div>
+        </div>
+        
     
         <div class="card_bg">
             <div id="responseContainer" style="display: none;">
-                <h2>Travel Plan</h2>
                 <div id="responseContent"></div>
                 <button id="downloadPdf" style="display: none;">Download as PDF</button>
             </div>
         </div>        
     </div>    
 
-        <div style="height: 100px;"></div>
+    <div style="height: 100px;"></div>
 
     <script src="../static/js/script.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
     <script>
-        $(document).ready(function() {
-            $('#travelForm').on('submit', function(e) {
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('travelForm');
+            const responseContainer = document.getElementById('responseContainer');
+            const responseContent = document.getElementById('responseContent');
+            const downloadPdfButton = document.getElementById('downloadPdf');
+            const loadingIndicator = document.getElementById('loading-indicator');
+
+            form.addEventListener('submit', function (e) {
                 e.preventDefault();
-                
-                $.ajax({
-                    url: '/dashboard',
-                    type: 'POST',
-                    data: $(this).serialize(),
-                    success: function(response) {
-                        if (response.success) {
-                            $('#responseContent').html(response.plan.raw_text);
-                            $('#responseContainer').show();
-                            $('#downloadPdf').show();
-                        } else {
-                            alert('Error: ' + response.message);
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        alert('An error occurred: ' + error);
+
+                // Show loading indicator
+                loadingIndicator.style.display = 'block';
+
+                // Gather form data
+                const formData = new FormData(form);
+
+                // Fetch API call to backend
+                fetch('/dashboard', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Hide loading indicator
+                    loadingIndicator.style.display = 'none';
+
+                    if (data.success) {
+                        // Display response data in the HTML
+                        responseContent.innerHTML = data.plan.raw_text;
+                        responseContainer.style.display = 'block';
+                        downloadPdfButton.style.display = 'block';
+                    } else {
+                        alert('Error: ' + data.message);
                     }
+                })
+                .catch(error => {
+                    loadingIndicator.style.display = 'none';
+                    alert('An error occurred: ' + error);
                 });
             });
 
-            $('#downloadPdf').on('click', function() {
-                // Create a new jsPDF instance
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
+            // Download PDF functionality
+            downloadPdfButton.addEventListener('click', function () {
+                const content = document.getElementById('responseContent');
+                const opt = {
+                    filename: 'myPage.pdf',
+                    margin: 2,
+                    image: {type: 'jpeg', quality: 0.9},
+                    jsPDF: {format: 'letter', orientation: 'portrait'},
+                    pagebreak: {mode: 'css' }
+                  };
 
-                // Get the HTML content
-                const content = $('#responseContent').html();
-
-                // Add the content to the PDF
-                doc.html(content, {
-                    callback: function(doc) {
-                        // Save the PDF
-                        doc.save('travel_plan.pdf');
-                    },
-                    x: 15,
-                    y: 15,
-                    width: 170, // Adjust the width as needed
-                    windowWidth: 650 // Adjust this value to match your content width
-                });
+                // Generate PDF from HTML content
+                html2pdf().set(opt).from(content).save();
             });
+            
         });
     </script>
 </body>
