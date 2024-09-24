@@ -16,6 +16,8 @@ This project is an AI-powered travel itinerary generator developed as part of th
 
 The AI Travel Planner is designed to take user inputs through predefined fields such as destination, start and end dates, group size, travel preferences, and budget. Using these inputs, the planner generates a complete, day-by-day itinerary that aligns with the user’s preferences. It calculates the total budget, offers real-time weather forecasts, and recommends activities, accommodations, meals, and transportation options.
 
+![Architecture](static/img/architecture.png)
+
 ## Inputs
 
 The user must provide the following information for the planner to generate an itinerary:
